@@ -4,14 +4,21 @@ import sys
 from util import util
 import numpy as np
 import argparse
+import shutil
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--in_path', type=str, default='/data/big/dataset/ILSVRC2012')
 parser.add_argument('--out_path', type=str, default='./dataset/ilsvrc2012/')
 
+
 opt = parser.parse_args()
 orig_path = opt.in_path
 print('Copying ILSVRC from...[%s]'%orig_path)
+
+
+# if os.path.isdir(opt.out_path):
+#     shutil.rmtree(opt.out_path)
+
 
 # Copy over part of training set (for initializer)
 trn_small_path = os.path.join(opt.out_path,'train_small')

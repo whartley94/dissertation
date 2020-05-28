@@ -10,7 +10,7 @@ import shutil
 random.seed(10)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--in_path', type=str, default='../datasets/SUN2012/Images/')
+parser.add_argument('--in_path', type=str, default='/Users/Will/Documents/Uni/MscEdinburgh/Diss/datasets/SUN2012/Images/')
 parser.add_argument('--out_path', type=str, default='./dataset/SUN2012/')
 
 opt = parser.parse_args()
