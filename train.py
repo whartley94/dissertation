@@ -12,7 +12,8 @@ from util import util
 if __name__ == '__main__':
     opt = TrainOptions().parse()
 
-    opt.dataroot = './dataset/SUN2012/%s/' % opt.phase
+    # opt.dataroot = './dataset/SUN2012/%s/' % opt.phase
+    opt.dataroot = '/home/s1843503/datasets/INetData/Torr/ Tiny%s/' % opt.phase
     dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                transform=transforms.Compose([
                                                    transforms.RandomChoice([transforms.Resize(opt.loadSize, interpolation=1),
