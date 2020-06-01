@@ -121,7 +121,7 @@ class Pix2PixModel(BaseModel):
         (self.fake_B_class, self.fake_B_reg) = self.netG(self.real_A, self.hint_B, self.mask_B)
         # if(self.opt.classification):
 
-        if len(self.opt.gpu_ids) > 0 :
+        if len(self.opt.gpu_ids) > 0:
         	netF = self.netG.module
         else:
         	netF = self.netG

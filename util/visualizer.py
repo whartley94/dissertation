@@ -5,6 +5,7 @@ import time
 from . import util
 from . import html
 from scipy.misc import imresize
+import matplotlib.pyplot as plt
 
 
 # save image to the disk
@@ -51,8 +52,17 @@ class Visualizer():
             self.img_dir = os.path.join(self.web_dir, 'images')
             print('create web directory %s...' % self.web_dir)
             util.mkdirs([self.web_dir, self.img_dir])
+
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
+        self.np_log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.npy')
+        self.short_log_name = os.path.join(opt.checkpoints_dir, opt.name, 'short_loss_log.txt')
+        self.mpl_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.png')
+
+
         with open(self.log_name, "a") as log_file:
+            now = time.strftime("%c")
+            log_file.write('================ Training Loss (%s) ================\n' % now)
+        with open(self.short_log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
 
@@ -126,27 +136,55 @@ class Visualizer():
             webpage.save()
 
     # losses: dictionary of error labels and values
-    def plot_current_losses(self, epoch, counter_ratio, opt, losses):
+    def plot_current_losses(self, epoch, counter_ratio, opt, losses, mpl=False, npy=False):
         if not hasattr(self, 'plot_data'):
             self.plot_data = {'X': [], 'Y': [], 'legend': list(losses.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
         self.plot_data['Y'].append([losses[k] for k in self.plot_data['legend']])
-        self.vis.line(
-            X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
-            Y=np.array(self.plot_data['Y']),
-            opts={
-                'title': self.name + ' loss over time',
-                'legend': self.plot_data['legend'],
-                'xlabel': 'epoch',
-                'ylabel': 'loss'},
-            win=self.display_id)
+        X_dat = np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1)
+        Y_dat = np.array(self.plot_data['Y'])
+        if not mpl:
+            self.vis.line(
+                X=X_dat,
+                Y=Y_dat,
+                opts={
+                    'title': self.name + ' loss over time',
+                    'legend': self.plot_data['legend'],
+                    'xlabel': 'epoch',
+                    'ylabel': 'loss'},
+                win=self.display_id)
+
+        if npy:
+            with open(self.np_log_name, 'wb') as f:
+                np.save(f, (X_dat, Y_dat))
+
+        if mpl:
+            fig = plt.figure(figsize=(10,5))
+            ax = fig.add_subplot(111)
+            ax.set_title(self.name + ' loss over time')
+            ax.plot(X_dat, Y_dat)
+            ax.set_xlabel('epoch')
+            ax.set_ylabel('loss')
+            ax.legend(self.plot_data['legend'], bbox_to_anchor=(1.04, 1), loc="upper left")
+            plt.subplots_adjust(right=0.7)
+            # plt.show()
+            plt.savefig(self.mpl_name, bbox_inches="tight", dpi=400)
+
 
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, i, losses, t, t_data):
         message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, i, t, t_data)
+        message2 = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, i, t, t_data)
         for k, v in losses.items():
             message += '%s: %.3f, ' % (k, v)
+            if k == 'G_CE':
+                message2 += '%s: %.3f, ' % (k, v)
+            if k == 'G_L1_reg':
+                message2 += '%s: %.3f ' % (k, v)
 
         print(message)
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)
+        with open(self.short_log_name, "a") as log_file:
+            log_file.write('%s\n' % message2)
+

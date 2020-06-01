@@ -6,6 +6,7 @@ from util.visualizer import Visualizer
 import torch
 import torchvision
 import torchvision.transforms as transforms
+import os
 
 from util import util
 
@@ -13,7 +14,11 @@ if __name__ == '__main__':
     opt = TrainOptions().parse()
 
     # opt.dataroot = './dataset/SUN2012/%s/' % opt.phase
-    opt.dataroot = '/home/s1843503/datasets/INetData/Torr/Tiny/%s/' % opt.phase
+    opt.dataroot = os.path.join(opt.data_dir, opt.phase, "")
+    print('Data Path: ', opt.dataroot)
+    # opt.dataroot = '/home/s1843503/datasets/INetData/Torr/Tiny/%s/' % opt.phase
+
+
     dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                transform=transforms.Compose([
                                                    transforms.RandomChoice([transforms.Resize(opt.loadSize, interpolation=1),
@@ -37,7 +42,7 @@ if __name__ == '__main__':
 
     model = create_model(opt)
     model.setup(opt)
-    model.print_networks(True)
+    model.print_networks(not opt.invisible_network)
 
     visualizer = Visualizer(opt)
     total_steps = 0
@@ -80,6 +85,9 @@ if __name__ == '__main__':
                 if opt.display_id > 0:
                     # embed()
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)
+                else:
+                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses, True, True)
+
 
             if total_steps % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' %

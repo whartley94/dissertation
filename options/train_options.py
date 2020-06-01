@@ -27,5 +27,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_policy', type=str, default='lambda', help='learning rate policy: lambda|step|plateau')
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
         parser.add_argument('--avg_loss_alpha', type=float, default=.986, help='exponential averaging weight for displaying loss')
+        parser.add_argument('--data_dir', type=str, default='/home/s1843503/datasets/INetData/Torr/Tiny/', help='root folder of dataset to use')
+        parser.add_argument('--invisible_network', action='store_true', help='cancel print network layers on init')
         self.isTrain = True
         return parser
