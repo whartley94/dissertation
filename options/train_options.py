@@ -29,5 +29,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--avg_loss_alpha', type=float, default=.986, help='exponential averaging weight for displaying loss')
         parser.add_argument('--data_dir', type=str, default='/home/s1843503/datasets/INetData/Torr/Tiny/', help='root folder of dataset to use')
         parser.add_argument('--invisible_network', action='store_true', help='cancel print network layers on init')
+        parser.add_argument('--save_npy', action='store_true', help='Save numpy arrays during training')
+        parser.add_argument('--save_mpl', action='store_true', help='Save png loss log during training')
         self.isTrain = True
         return parser

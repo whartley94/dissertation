@@ -18,7 +18,6 @@ if __name__ == '__main__':
     print('Data Path: ', opt.dataroot)
     # opt.dataroot = '/home/s1843503/datasets/INetData/Torr/Tiny/%s/' % opt.phase
 
-
     dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                transform=transforms.Compose([
                                                    transforms.RandomChoice([transforms.Resize(opt.loadSize, interpolation=1),
@@ -84,10 +83,11 @@ if __name__ == '__main__':
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data)
                 if opt.display_id > 0:
                     # embed()
-                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses)
+                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses, True,
+                                                   opt.save_npy, opt.save_mpl)
                 else:
-                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses, True, True)
-
+                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, opt, losses, False,
+                                                   opt.save_npy, opt.save_mpl)
 
             if total_steps % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' %

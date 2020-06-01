@@ -136,14 +136,14 @@ class Visualizer():
             webpage.save()
 
     # losses: dictionary of error labels and values
-    def plot_current_losses(self, epoch, counter_ratio, opt, losses, mpl=False, npy=False):
+    def plot_current_losses(self, epoch, counter_ratio, opt, losses, vis=True, npy=False, mpl=False):
         if not hasattr(self, 'plot_data'):
             self.plot_data = {'X': [], 'Y': [], 'legend': list(losses.keys())}
         self.plot_data['X'].append(epoch + counter_ratio)
         self.plot_data['Y'].append([losses[k] for k in self.plot_data['legend']])
         X_dat = np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1)
         Y_dat = np.array(self.plot_data['Y'])
-        if not mpl:
+        if vis:
             self.vis.line(
                 X=X_dat,
                 Y=Y_dat,
