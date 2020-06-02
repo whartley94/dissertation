@@ -11,6 +11,7 @@ import os
 from util import util
 
 if __name__ == '__main__':
+    print('Python Starting')
     opt = TrainOptions().parse()
 
     # opt.dataroot = './dataset/SUN2012/%s/' % opt.phase
