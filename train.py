@@ -48,6 +48,7 @@ if __name__ == '__main__':
     total_steps = 0
 
     print('GPUs Available', torch.cuda.device_count())
+    print('Checkpoint Location: ', opt.checkpoints_dir)
 
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay):
         epoch_start_time = time.time()
