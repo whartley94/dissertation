@@ -169,6 +169,7 @@ class Visualizer():
             plt.subplots_adjust(right=0.7)
             # plt.show()
             plt.savefig(self.mpl_name, bbox_inches="tight", dpi=400)
+            plt.close(fig)
 
 
     # losses: same format as |losses| of plot_current_losses
