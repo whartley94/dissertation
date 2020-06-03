@@ -1,0 +1,26 @@
+Interactive, 1GPU:
+
+srun --partition=Teach-Interactive --time=02:00:00 --mem=14000 --cpus-per-task=4 --gres=gpu:1 --pty bash
+
+python train.py --name ClusterTest2 --sample_p 1.0 --niter 100 --niter_decay 0 --classification --phase train --gpu_ids 0 --display_id -1 --data_dir /home/s1843503/datasets/INetData/Torr/Tiny --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
+
+
+
+Interactive, 2GPU, Load A Model:
+srun --partition=Teach-Interactive --time=02:00:00 --mem=14000 --cpus-per-task=4 --gres=gpu:2 --pty bash
+
+python train.py --name ClusterTest2 --sample_p 1.0 --niter 100 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir /home/s1843503/datasets/INetData/Torr/Tiny --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl --load_model
+
+
+Scheduled, Standard:
+sbatch --partition=Teach-Short --mem=14000 --cpus-per-task=4 --gres=gpu:2 test_run.sh
+
+python train.py --name ClusterTest2 --sample_p 1.0 --niter 100 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir /home/s1843503/datasets/INetData/Torr/Tiny --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl --load_model
+
+
+Schectuled, Low Epochs:
+python train.py --name ClusterTest4 --sample_p 1.0 --niter 2 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir dest_path --checkpoints_dir cpoint_path --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
+
+
+Azure:
+python train.py --name ClusterTest4 --sample_p 1.0 --niter 2 --niter_decay 0 --classification --phase train --gpu_ids 0 --display_id -1 --data_dir /home/s1843503/datasets --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
