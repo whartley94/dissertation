@@ -1,0 +1,2 @@
+python3 train.py --name C1Test --sample_p 1.0 --niter 100 --niter_decay 0 --classification --phase train --gpu_ids 0 --display_id -1
+
