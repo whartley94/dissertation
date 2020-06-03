@@ -81,8 +81,14 @@ echo "Rsync Completed"
 cpoint_path=${SCRATCH_HOME}/checkpoints
 mkdir -p ${cpoint_path}  # make it if required
 
+echo "Forming Symlink Datafiles:"
+sorted_path=${SCRATCH_HOME}/dataset
+echo "Source Dir: ${dest_path}"
+echo "Destination Dir: ${dest_path}"
+python -u make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path} > data_progress.out
+
 echo "Starting python call"
-python train.py --name DFSTest --sample_p 1.0 --niter 2 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir ${dest_path} --checkpoints_dir ${cpoint_path} --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
+python train.py --name FSunTest --sample_p 1.0 --niter 2 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir ${sorted_path} --checkpoints_dir ${cpoint_path} --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
 echo "Python ended"
 
 # ======================================

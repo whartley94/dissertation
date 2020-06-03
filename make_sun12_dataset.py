@@ -33,6 +33,7 @@ else:
 if exists == False or (exists == True and leng == 0):
 
 	if not os.path.isfile('resources/train_set.data'):
+		print('Warning!: Train Pickle Was NOT FOUND!')
 
 		all_files = []
 		for (dirpath, dirnames, filenames) in os.walk(opt.in_path):
