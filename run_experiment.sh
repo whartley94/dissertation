@@ -59,10 +59,10 @@ echo "Activated conda environment"
 echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 # input data directory path on the DFS
-src_path=/home/${USER}/datasets/INetData/Torr/Tiny
+src_path=/home/${USER}/datasets/SUN2012/Images
 
 # input data directory path on the scratch disk of the node
-dest_path=${SCRATCH_HOME}/datasets/INetData/Torr/Tiny
+dest_path=${SCRATCH_HOME}/datasets/SUN2012/Images
 mkdir -p ${dest_path}  # make it if required
 
 # Important notes about rsync:
@@ -83,8 +83,8 @@ mkdir -p ${cpoint_path}  # make it if required
 
 echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset
-echo "Source Dir: ${dest_path}"
-echo "Destination Dir: ${dest_path}"
+echo "OG Dataset Dir: ${dest_path}"
+echo "Sorted Dataset Dir: ${sorted_path}"
 python -u make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path} > data_progress.out
 
 echo "Starting python call"
