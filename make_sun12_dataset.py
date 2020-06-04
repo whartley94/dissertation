@@ -107,18 +107,18 @@ if exists == False or (exists == True and leng == 0):
 	# Copy over part of training set (for initializer)
 	trn_small_path = os.path.join(opt.out_path,'train_small/subdir')
 	util.mkdirs(trn_small_path)
+	print('Making small training set in...[%s]'%trn_small_path)
 	for train_path in train_set[:int(num_train*.1)]:
 		os.symlink(train_path, os.path.join(trn_small_path,os.path.basename(train_path)))
-	print('Making small training set in...[%s]'%trn_small_path)
 
 
 	# Copy over whole training set
 	trn_path = os.path.join(opt.out_path,'train/subdir')
 	util.mkdirs(opt.out_path)
 	util.mkdirs(trn_path)
+	print('Making training set in...[%s]'%trn_path)
 	for train_path in train_set:
 		os.symlink(train_path, os.path.join(trn_path,os.path.basename(train_path)))
-	print('Making training set in...[%s]'%trn_path)
 
 
 	# Copy over subset of ILSVRC12 val set for colorization val set
@@ -127,7 +127,6 @@ if exists == False or (exists == True and leng == 0):
 	print('Making validation set in...[%s]'%val_path)
 	for vl_path in val_set:
 		os.symlink(vl_path, os.path.join(val_path,os.path.basename(vl_path)))
-	print('Making training set in...[%s]'%val_path)
 
 	# Copy over subset of ILSVRC12 val set for colorization test set
 	test_path = os.path.join(opt.out_path,'test/imgs')
@@ -135,7 +134,6 @@ if exists == False or (exists == True and leng == 0):
 	print('Making test set in...[%s]'%test_path)
 	for ts_path in test_set:
 		os.symlink(ts_path, os.path.join(test_path,os.path.basename(ts_path)))
-	print('Making training set in...[%s]'%test_path)
 
 	print('Done')
 else:

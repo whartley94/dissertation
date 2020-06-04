@@ -35,7 +35,8 @@ if __name__ == '__main__':
                                                    # transforms.RandomChoice([transforms.ColorJitter(brightness=.05, contrast=.05, saturation=.05, hue=.05),
                                                    #                          transforms.ColorJitter(brightness=0, contrast=0, saturation=.05, hue=.1),
                                                    #                          transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0), ]),
-    dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
+    dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
+                                                 num_workers=int(opt.nThreads))
 
     dataset_size = len(dataset)
     print('#training images = %d' % dataset_size)
@@ -57,6 +58,9 @@ if __name__ == '__main__':
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
+            # print('I', i)
+            # print('Data_raw ', data_raw)
+            # print('Data_raw 0', data_raw[0])
             if len(opt.gpu_ids) > 0:
                 data_raw[0] = data_raw[0].cuda()
             data = util.get_colorization_data(data_raw, opt, p=opt.sample_p)
