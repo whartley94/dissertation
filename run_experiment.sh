@@ -85,10 +85,10 @@ echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset
 echo "OG Dataset Dir: ${dest_path}"
 echo "Sorted Dataset Dir: ${sorted_path}"
-python -u make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path} > data_progress.out
+python -u  make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path} > data_sorting.out
 
 echo "Starting python call"
-python train.py --name FSunTest --sample_p 1.0 --niter 2 --niter_decay 0 --classification --phase train --gpu_ids 0,1 --display_id -1 --data_dir ${sorted_path} --checkpoints_dir ${cpoint_path} --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
+python train.py --name 4vs2is4 --sample_p 1.0 --niter 5 --niter_decay 0 --classification --phase train --gpu_ids 0,1,2,3 --display_id -1 --data_dir ${sorted_path} --checkpoints_dir ${cpoint_path} --print_freq 1 --display_freq 1 --invisible_network --save_npy --save_mpl
 echo "Python ended"
 
 # ======================================
