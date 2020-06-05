@@ -81,6 +81,8 @@ if exists == False or (exists == True and leng == 0):
 		# print(train_set)
 
 	else:
+		print('Loading indexes from PICKLE Files!')
+
 		with open('resources/train_set.data', 'rb') as filehandle:
 			train_tails = pickle.load(filehandle)
 		with open('resources/test_set.data', 'rb') as filehandle2:

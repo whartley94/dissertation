@@ -1,2 +1,2 @@
-python3 train.py --name C1Test --sample_p 1.0 --niter 100 --niter_decay 0 --classification --phase train --gpu_ids 0 --display_id -1
-
+python train.py --name Arr1Test --gpu_ids 0,1,2,3 --batch_size 25 --print_freq 50 --phase train_small --sample_p 1.0 --niter 1 --niter_decay 0 --classification --display_id -1 --data_dir ${sorted_path} --checkpoints_dir ${cpoint_path} --invisible_network --save_npy --save_mpl
+python train.py --name Arr2Test --gpu_ids 0,1,2,3 --batch_size 32 --print_freq 64 --phase train_small --sample_p 1.0 --niter 1 --niter_decay 0 --classification --display_id -1 --data_dir ${sorted_path} --checkpoints_dir ${cpoint_path} --invisible_network --save_npy --save_mpl

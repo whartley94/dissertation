@@ -30,28 +30,28 @@
 # i.e. `# # SBATCH ...` -> `#SBATCH ...`
 
 # Location for stdout log - see https://slurm.schedmd.com/sbatch.html#lbAH
-# #SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
+#SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
 
 # Location for stderr log - see https://slurm.schedmd.com/sbatch.html#lbAH
-# #SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
+#SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
 
 # Maximum number of nodes to use for the job
-# #SBATCH --nodes=1
+#SBATCH --nodes=1
 
 # Generic resources to use - typically you'll want gpu:n to get n gpus
-# #SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 
 # Megabytes of RAM required. Check `cluster-status` for node configurations
-# #SBATCH --mem=14000
+#SBATCH --mem=14000
 
 # Number of CPUs to use. Check `cluster-status` for node configurations
-# #SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=4
 
 # Maximum time for the job to run, format: days-hours:minutes:seconds
 # #SBATCH --time=1-04:00:00
 
 # Partition of the cluster to pick nodes from (check `sinfo`)
-# #SBATCH --partition=PGR-Standard
+#SBATCH --partition=Teach-Standard
 
 # Any nodes to exclude from selection
 # #SBATCH --exclude=charles[05,12-18]
@@ -84,15 +84,17 @@ set -e
 # N.B. disk could be at /disk/scratch_big, or /disk/scratch_fast. Check
 # yourself using an interactive session, or check the docs:
 #     http://computing.help.inf.ed.ac.uk/cluster-computing
+echo "Making Scratch Disk"
 SCRATCH_DISK=/disk/scratch
 SCRATCH_HOME=${SCRATCH_DISK}/${USER}
 mkdir -p ${SCRATCH_HOME}
+echo "Scratch Disk Created"
 
 # Activate your conda environment
-CONDA_ENV_NAME=cs_example
+CONDA_ENV_NAME=tideep
 echo "Activating conda environment: ${CONDA_ENV_NAME}"
 conda activate ${CONDA_ENV_NAME}
-
+echo "Activated conda environment"
 
 # =================================
 # Move input data to scratch disk
@@ -114,10 +116,10 @@ conda activate ${CONDA_ENV_NAME}
 echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 # input data directory path on the DFS
-src_path=/home/${USER}/git/project_name/data/input
+src_path=/home/${USER}/datasets/SUN2012/Images
 
 # input data directory path on the scratch disk of the node
-dest_path=${SCRATCH_HOME}/project_name/data/input
+dest_path=${SCRATCH_HOME}/datasets/SUN2012/Images
 mkdir -p ${dest_path}  # make it if required
 
 # Important notes about rsync:
@@ -131,6 +133,17 @@ mkdir -p ${dest_path}  # make it if required
 #       https://download.samba.org/pub/rsync/rsync.html
 
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
+echo "Rsync Completed"
+
+cpoint_path=${SCRATCH_HOME}/checkpoints
+mkdir -p ${cpoint_path}  # make it if required
+
+echo "Forming Symlink Datafiles:"
+sorted_path=${SCRATCH_HOME}/dataset
+echo "OG Dataset Dir: ${dest_path}"
+echo "Sorted Dataset Dir: ${sorted_path}"
+python make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path}
+
 
 # ==============================
 # Finally, run the experiment!
@@ -154,10 +167,11 @@ echo "Command ran successfully!"
 # example, send it back to the DFS with rsync
 
 echo "Moving output data back to DFS"
+#src_path=${SCRATCH_HOME}/project_name/data/output
+dest_path=/home/${USER}/git/dissertation/checkpoints
+rsync --archive --update --compress --progress ${cpoint_path}/ ${dest_path}
+echo "Rsync done"
 
-src_path=${SCRATCH_HOME}/project_name/data/output
-dest_path=/home/${USER}/git/project_name/data/output
-rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 
 # =========================
