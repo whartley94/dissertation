@@ -36,7 +36,7 @@ if __name__ == '__main__':
                                                    #                          transforms.ColorJitter(brightness=0, contrast=0, saturation=.05, hue=.1),
                                                    #                          transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0), ]),
     dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
-                                                 num_workers=int(opt.nThreads))
+                                                 num_workers=int(opt.num_threads))
 
     dataset_size = len(dataset)
     print('#training images = %d' % dataset_size)
