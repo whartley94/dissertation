@@ -39,7 +39,7 @@
 #SBATCH --nodes=1
 
 # Generic resources to use - typically you'll want gpu:n to get n gpus
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:8
 
 # Megabytes of RAM required. Check `cluster-status` for node configurations
 #SBATCH --mem=14000
@@ -117,6 +117,8 @@ echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 # input data directory path on the DFS
 src_path=/home/${USER}/datasets/SUN2012/Images
+model_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints
+
 
 # input data directory path on the scratch disk of the node
 dest_path=${SCRATCH_HOME}/datasets/SUN2012/Images
@@ -137,6 +139,8 @@ echo "Rsync Completed"
 
 cpoint_path=${SCRATCH_HOME}/checkpoints
 mkdir -p ${cpoint_path}  # make it if required
+rsync --archive --update --compress --progress ${model_src}/ ${cpoint_path}
+
 
 echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset

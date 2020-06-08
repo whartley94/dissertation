@@ -27,7 +27,7 @@ base_call2 = f"python train.py --name Auto --sample_p .125 --niter 1 --niter_dec
 
 components = ['batch_size', 'gpu_ids']
 batch_sizes = [10, 25, 32, 64, 128]
-gpu_idss = ['0', '0,1', '0,1,2,3']
+gpu_idss = ['0,1,2,3,4,5,6,7']
 # num_threads = [0, 4]
 # phases = ['train_small', 'train']
 flattened_list = list(itertools.product(batch_sizes, gpu_idss))
