@@ -39,7 +39,9 @@ class BaseModel():
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 
-        if not self.isTrain or opt.load_model:
+        if opt.load_sg_model:
+            self.load_sg_networks(opt.checkpoints_dir)
+        elif not self.isTrain or opt.load_model:
             self.load_networks(opt.which_epoch)
         self.print_networks(opt.verbose)
 
@@ -126,6 +128,29 @@ class BaseModel():
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
                 print('loading the model from %s' % load_path)
+                # if you are using PyTorch newer than 0.4 (e.g., built from
+                # GitHub source), you can remove str() on self.device
+                state_dict = torch.load(load_path, map_location=str(self.device))
+                if hasattr(state_dict, '_metadata'):
+                    del state_dict._metadata
+
+                # patch InstanceNorm checkpoints prior to 0.4
+                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
+                    self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
+                net.load_state_dict(state_dict)
+
+
+    # load sigg models from the disk
+    def load_sg_networks(self, checkpoints_dir):
+        for name in self.model_names:
+            if isinstance(name, str):
+                load_filename = 'latest_net_%s.pth' % name
+                load_dirname = os.path.join(checkpoints_dir, 'siggraph_caffemodel')
+                load_path = os.path.join(load_dirname, load_filename)
+                net = getattr(self, 'net' + name)
+                if isinstance(net, torch.nn.DataParallel):
+                    net = net.module
+                print('loading the siggraph_caffemodel model from %s' % load_path)
                 # if you are using PyTorch newer than 0.4 (e.g., built from
                 # GitHub source), you can remove str() on self.device
                 state_dict = torch.load(load_path, map_location=str(self.device))

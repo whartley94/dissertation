@@ -60,6 +60,7 @@ class BaseOptions():
         parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')
 
         parser.add_argument('--load_model', action='store_true', help='load the latest model')
+        parser.add_argument('--load_sg_model', action='store_true', help='load the pretrained sg model')
         parser.add_argument('--half', action='store_true', help='half precision model')
 
         self.initialized = True
@@ -133,6 +134,8 @@ class BaseOptions():
             torch.cuda.set_device(opt.gpu_ids[0])
         opt.A = 2 * opt.ab_max / opt.ab_quant + 1
         opt.B = opt.A
+
+        opt.print_freq = opt.batch_size * 2 #Not sure if this is best?
 
         self.opt = opt
         return self.opt
