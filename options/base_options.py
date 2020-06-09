@@ -91,6 +91,18 @@ class BaseOptions():
 
         return parser.parse_args()
 
+    def gather_options2(self, argz):
+        # initialize parser with basic options
+        if not self.initialized:
+            parser = argparse.ArgumentParser(
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            parser = self.initialize(parser)
+
+        # get the basic options
+        opt, _ = parser.parse_known_args(argz)
+
+        return opt
+
     def print_options(self, opt):
         message = ''
         message += '----------------- Options ---------------\n'
