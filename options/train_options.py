@@ -31,6 +31,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--invisible_network', type=bool, default=False, help='cancel print network layers on init')
         parser.add_argument('--save_npy', type=bool, default=True, help='Save numpy arrays during training')
         parser.add_argument('--save_mpl', type=bool, default=True, help='Save png loss log during training')
-        parser.add_argument('--auto_names', type=list, default=['gpu_ids', 'batch_size', 'num_threads', 'phase', 'load_sg_model'])
+        parser.add_argument('--auto_names', type=list, default=['gpu_ids', 'batch_size', 'niter', 'phase', 'load_sg_model'])
+        parser.add_argument('--slurm_id', type=str, default='0')
         self.isTrain = True
         return parser
