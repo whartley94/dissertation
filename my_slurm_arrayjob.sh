@@ -160,7 +160,7 @@ python make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path}
 experiment_text_file=$1
 COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d\" ${experiment_text_file}`"
 echo "Running provided command: ${COMMAND}"
-eval "${COMMAND} --slurm_id ${SLURM_ARRAY_TASK_ID}"
+eval "${COMMAND} --slurm_id ${SLURM_JOB_ID}"
 echo "Command ran successfully!"
 
 
