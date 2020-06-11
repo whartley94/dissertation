@@ -6,6 +6,30 @@ import os
 from collections import OrderedDict
 from IPython import embed
 
+# Shortcut for getting mean lab value of an area, for visualise_test
+def mean_pixel(point_a, opt, lab=True):
+    if lab:
+        point_a = rgb2lab(point_a, opt)
+    point_a = point_a.cpu().float().numpy()
+    mean_a = np.mean(np.mean(point_a, axis=3), axis=2)[0]
+    return mean_a
+
+
+def draw_square(real_im, hb, wb, P, col):
+    col = col*255
+    for g in np.arange(hb, hb + P):
+        real_im[g, wb, :] = col
+        real_im[g, wb + P - 1 , :] = col
+    for g in np.arange(wb, wb + P):
+        real_im[hb, g, :] = col
+        real_im[hb + P - 1, g, :] = col
+    return real_im
+
+def draw_fill_square(real_im, hb, wb, P, col):
+    col = col*255
+    real_im[hb:hb+P, wb:wb+P, :] = col
+    return real_im
+
 # Converts a Tensor into an image array (numpy)
 # |imtype|: the desired type of the converted numpy array
 def tensor2im(input_image, imtype=np.uint8):
@@ -258,13 +282,24 @@ def add_color_patches_rand_gt(data,opt,p=.125,num_points=None,use_avg=True,samp=
 
     return data
 
-def add_color_patch(data,mask,opt,P=1,hw=[128,128],ab=[0,0]):
+
+def add_color_patch(data, opt, P=1, hw=[128,128], ab=[0,0]):
+    # Add a color patch at (h,w) with color (a,b)
+    data['hint_B'][:,0,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1.*ab[0]/opt.ab_norm
+    data['hint_B'][:,1,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1.*ab[1]/opt.ab_norm
+    data['mask_B'][:,:,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1-opt.mask_cent
+
+    return data
+
+
+def add_color_patch_old(data,opt,P=1,hw=[128,128],ab=[0,0]):
     # Add a color patch at (h,w) with color (a,b)
     data[:,0,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1.*ab[0]/opt.ab_norm
     data[:,1,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1.*ab[1]/opt.ab_norm
     mask[:,:,hw[0]:hw[0]+P,hw[1]:hw[1]+P] = 1-opt.mask_cent
 
     return (data,mask)
+
 
 def crop_mult(data,mult=16,HWmax=[800,1200]):
     # crop image to a multiple
@@ -273,6 +308,8 @@ def crop_mult(data,mult=16,HWmax=[800,1200]):
     Wnew = int(min(W/mult*mult,HWmax[1]))
     h = (H-Hnew)/2
     w = (W-Wnew)/2
+    h = int(h)
+    w = int(w)
 
     return data[:,:,h:h+Hnew,w:w+Wnew]
 

@@ -4,6 +4,9 @@ from options.train_options import TrainOptions
 from models import create_model
 from util.visualizer import save_images
 from util import html
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 import string
 import torch
@@ -26,7 +29,12 @@ if __name__ == '__main__':
     opt.batch_size = 1  # test code only supports batch_size = 1
     opt.display_id = -1  # no visdom display
     opt.phase = 'val'
-    opt.dataroot = './dataset/ilsvrc2012/%s/' % opt.phase
+
+
+    # opt.dataroot = './dataset/ilsvrc2012/%s/' % opt.phase
+    opt.dataroot = os.path.join(opt.data_dir, opt.phase, "")
+    print('Data Path: ', opt.dataroot)
+
     opt.serial_batches = True
     opt.aspect_ratio = 1.
 
@@ -37,7 +45,7 @@ if __name__ == '__main__':
     dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
     model = create_model(opt)
-    model.setup(opt)
+    model.setup(opt) #Loads up model named, in the checkpoints dir pointed to
     model.eval()
 
     # create website
@@ -49,17 +57,19 @@ if __name__ == '__main__':
     entrs = np.zeros((opt.how_many, S))
 
     for i, data_raw in enumerate(dataset_loader):
-        data_raw[0] = data_raw[0].cuda()
+        if len(opt.gpu_ids) > 0 :
+            data_raw[0] = data_raw[0].cuda()
         data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
         # with no points
         for (pp, sample_p) in enumerate(sample_ps):
-            img_path = [string.replace('%08d_%.3f' % (i, sample_p), '.', 'p')]
+            img_path = [str.replace('%08d_%.3f' % (i, sample_p), '.', 'p')]
             data = util.get_colorization_data(data_raw, opt, ab_thresh=0., p=sample_p)
 
             model.set_input(data)
             model.test(True)  # True means that losses will be computed
             visuals = util.get_subset_dict(model.get_current_visuals(), to_visualize)
+
 
             psnrs[i, pp] = util.calculate_psnr_np(util.tensor2im(visuals['real']), util.tensor2im(visuals['fake_reg']))
             entrs[i, pp] = model.get_current_losses()['G_entr']
