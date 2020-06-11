@@ -25,9 +25,13 @@ def draw_square(real_im, hb, wb, P, col):
         real_im[hb + P - 1, g, :] = col
     return real_im
 
-def draw_fill_square(real_im, hb, wb, P, col):
+def draw_fill_square(real_im, hb, wb, P, col, boarder=''):
     col = col*255
     real_im[hb:hb+P, wb:wb+P, :] = col
+    if boarder == 'Black':
+        real_im = draw_square(real_im, hb-1, wb-1, P+1, 255)
+    if boarder == 'White':
+        real_im = draw_square(real_im, hb - 1, wb - 1, P + 1, 3)
     return real_im
 
 # Converts a Tensor into an image array (numpy)
