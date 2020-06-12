@@ -14,130 +14,169 @@ import numpy as np
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
-    images_to_scan = 30  # Number of images to process
-    n = 6  # Number of points to sample
+    np.random.seed(1)
+    images_to_scan = 20  # Number of images to process
+    n = 6 # Number of points to sample
     P = 5  # Point sizes
-    init_points = 6  # Number of points to use for 'before' image
-    show_images = False
-    to_visualize = ['gray', 'hint', 'hint_ab', 'fake_entr', 'real', 'fake_reg', 'real_ab', 'fake_ab_reg', ]
-    to_display = 'fake_reg'
-    which_channel = 'fake_reg'  # Which channel to scan for colour symmetry checks?
+    init_points = 10  # Number of points to use for 'before' image
+    npname = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/resources/its' + str(images_to_scan) +\
+             'n' + str(n) + 'p' + str(P) + 'ip' + str(init_points) + '.npy'
 
-    opt = TrainOptions().parse()
-    opt.load_model = True
-    opt.num_threads = 1   # test code only supports num_threads = 1
-    opt.batch_size = 1  # test code only supports batch_size = 1
-    opt.display_id = -1  # no visdom display
-    opt.phase = 'val'
+    if not os.path.isfile(npname):
 
-    opt.dataroot = os.path.join(opt.data_dir, opt.phase, "")
-    print('Data Path: ', opt.dataroot)
+        show_images = True
+        show_effect_mx = True
+        to_visualize = ['gray', 'hint', 'hint_ab', 'fake_entr', 'real', 'fake_reg', 'real_ab', 'fake_ab_reg', ]
+        to_display = 'fake_reg'
+        which_channel = 'fake_reg'  # Which channel to scan for colour symmetry checks?
 
-    opt.serial_batches = True
-    opt.aspect_ratio = 1.
+        opt = TrainOptions().parse()
+        opt.load_model = True
+        opt.num_threads = 1   # test code only supports num_threads = 1
+        opt.batch_size = 1  # test code only supports batch_size = 1
+        opt.display_id = -1  # no visdom display
+        opt.phase = 'val'
 
-    dataset = torchvision.datasets.ImageFolder(opt.dataroot,
-                                               transform=transforms.Compose([
-                                                   transforms.Resize((opt.loadSize, opt.loadSize)),
-                                                   transforms.ToTensor()]))
-    dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
+        opt.dataroot = os.path.join(opt.data_dir, opt.phase, "")
+        print('Data Path: ', opt.dataroot)
 
-    model = create_model(opt)
-    model.setup(opt)  # Loads up model named, in the checkpoints dir pointed to
-    model.eval()
+        opt.serial_batches = True
+        opt.aspect_ratio = 1.
 
-    all_e_diff = []
+        dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+                                                   transform=transforms.Compose([
+                                                       transforms.Resize((opt.loadSize, opt.loadSize)),
+                                                       transforms.ToTensor()]))
+        dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
-    for i, data_raw in enumerate(dataset_loader):
-        if len(opt.gpu_ids) > 0 :
-            data_raw[0] = data_raw[0].cuda()
-        data_raw[0] = util.crop_mult(data_raw[0], mult=8)
+        model = create_model(opt)
+        model.setup(opt)  # Loads up model named, in the checkpoints dir pointed to
+        model.eval()
 
-        # Initialise data with some random number of hints.
-        data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=init_points)
+        all_e_diff = []
 
-        point_a_col = [-50, 50]  # Do this fixed for now, possibly sample it randomly too.?
-        # print('A Col Assigned: ', np.asarray(point_a_col).astype(float)/opt.ab_norm)
+        gg = []
 
-        lab_colours = np.zeros((n, 3))
-        rgb_colours = np.zeros((n, 3))
-        locations = np.zeros((n, 2)).astype(int)
-        effect_mx = np.zeros((n, n))
+        for i, data_raw in enumerate(dataset_loader):
+            if len(opt.gpu_ids) > 0 :
+                data_raw[0] = data_raw[0].cuda()
+            data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
-        N, C, H, W = data['B'].shape
+            # Initialise data with some random number of hints.
+            data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=init_points)
 
-        model.set_input(data)
-        model.test(True)  # True means that losses will be computed
-        visuals = util.get_subset_dict(model.get_current_visuals(), to_visualize)
+            ca = np.random.randint(-opt.ab_norm, opt.ab_norm)
+            cb = np.random.randint(-opt.ab_norm, opt.ab_norm)
+            point_a_col = [ca, cb]  # Do this fixed for now, possibly sample it randomly too.?
+            # print('A Col Assigned: ', np.asarray(point_a_col).astype(float)/opt.ab_norm)
 
-        for loc in range(len(locations)):
-            h = np.random.randint(H - P + 1)
-            w = np.random.randint(W - P + 1)
-            locations[loc, 0] = h
-            locations[loc, 1] = w
-            point = visuals[which_channel][:, :, h:h + P, w:w + P]
-            lab_colours[loc] = util.mean_pixel(point, opt, True)
-            rgb_colours[loc] = util.mean_pixel(point, opt, False)
-        # print('Locations: ', locations)
-        # print('Lab Colours:', lab_colours*opt.ab_norm)
-        # print('Rgb Colours:', rgb_colours)
+            lab_colours = np.zeros((n, 3))
+            rgb_colours = np.zeros((n, 3))
+            locations = np.zeros((n, 2)).astype(int)
+            effect_mx = np.zeros((n, n))
 
-        # Scan over the points making each the source
-        for j in range(n):
-            data_n = copy.deepcopy(data)  # Need to deep copy the data otherwise we just add more and more colour
-            data_n = util.add_color_patch(data_n, opt, P, [locations[j, 0], locations[j, 1]], point_a_col)
-            model.set_input(data_n)
+            N, C, H, W = data['B'].shape
+
+            model.set_input(data)
             model.test(True)  # True means that losses will be computed
-            visuals_n = util.get_subset_dict(model.get_current_visuals(), to_visualize)
+            visuals = util.get_subset_dict(model.get_current_visuals(), to_visualize)
 
-            # lab_colours = np.zeros((n, 3))
-            rgb_colours_after = np.zeros((n, 3))
+            for loc in range(len(locations)):
+                h = np.random.randint(H - P + 1)
+                w = np.random.randint(W - P + 1)
+                locations[loc, 0] = h
+                locations[loc, 1] = w
+                point = visuals[which_channel][:, :, h:h + P, w:w + P]
+                lab_colours[loc] = util.mean_pixel(point, opt, True)
+                rgb_colours[loc] = util.mean_pixel(point, opt, False)
+            # print('Locations: ', locations)
+            # print('Lab Colours:', lab_colours*opt.ab_norm)
+            # print('Rgb Colours:', rgb_colours)
 
-            # For each source, scan the other points and measure the change
-            for loc in range(n):
-                h = locations[loc, 0]
-                w = locations[loc, 1]
-                point = visuals_n[which_channel][:, :, h:h + P, w:w + P]
-                lab_colours_after = util.mean_pixel(point, opt, True)
-                rgb_colours_after[loc] = util.mean_pixel(point, opt, False)
-                effect_mx[j, loc]  = np.linalg.norm(rgb_colours[loc] - rgb_colours_after[loc])
+            # Scan over the points making each the source
+            for j in range(n):
+                data_n = copy.deepcopy(data)  # Need to deep copy the data otherwise we just add more and more colour
+                data_n = util.add_color_patch(data_n, opt, P, [locations[j, 0], locations[j, 1]], point_a_col)
+                model.set_input(data_n)
+                model.test(True)  # True means that losses will be computed
+                visuals_n = util.get_subset_dict(model.get_current_visuals(), to_visualize)
 
-            if show_images:
-                for k in to_visualize:
-                    if k in to_display:
-                        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-                        fig.suptitle(k)
+                # lab_colours = np.zeros((n, 3))
+                rgb_colours_after = np.zeros((n, 3))
 
-                        real_im = util.tensor2im(visuals[k])
-                        real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P, rgb_colours[j], 'White')
-                        for l in range(n):
-                            if l is not j:
-                                real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P, rgb_colours[l], 'Black')
-                        image_pil = Image.fromarray(real_im)
-                        ax1.imshow(image_pil)
+                # For each source, scan the other points and measure the change
+                for loc in range(n):
+                    h = locations[loc, 0]
+                    w = locations[loc, 1]
+                    point = visuals_n[which_channel][:, :, h:h + P, w:w + P]
+                    lab_colours_after = util.mean_pixel(point, opt, True)
+                    rgb_colours_after[loc] = util.mean_pixel(point, opt, False)
+                    effect_mx[j, loc] = np.linalg.norm(rgb_colours[loc] - rgb_colours_after[loc])
 
-                        real_im = util.tensor2im(visuals_n[k])
-                        real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P, rgb_colours_after[j],
-                                                        'White')
-                        for l in range(n):
-                            if l is not j:
-                                real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
-                                                                rgb_colours_after[l], 'Black')
-                        image_pil = Image.fromarray(real_im)
-                        ax2.imshow(image_pil)
+                if show_images:
+                    for k in to_visualize:
+                        if k in to_display:
+                            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+                            fig.suptitle(k)
 
-                        plt.show()
-                        plt.close()
+                            real_im = util.tensor2im(visuals[k])
+                            real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P,
+                                                            rgb_colours[j], 'White')
+                            for l in range(n):
+                                if l is not j:
+                                    real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
+                                                                    rgb_colours[l], 'Black')
+                            image_pil = Image.fromarray(real_im)
+                            ax1.imshow(image_pil)
+
+                            real_im = util.tensor2im(visuals_n[k])
+                            real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P,
+                                                            rgb_colours_after[j], 'White')
+                            for l in range(n):
+                                if l is not j:
+                                    real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
+                                                                    rgb_colours_after[l], 'Black')
+                            image_pil = Image.fromarray(real_im)
+                            ax2.imshow(image_pil)
+
+                            plt.show()
+                            plt.close()
+
+            if show_effect_mx:
+                # print(effect_mx)
+                fig, ax = plt.subplots(figsize=(5, 5))
+                # fx_image = Image.fromarray(effect_mx)
+                c = ax.imshow(effect_mx)
+                cbar = fig.colorbar(c)
+                plt.show()
+                plt.close()
+
+                # print(effect_mx)
+                fig, ax = plt.subplots(figsize=(5, 5))
+                # fx_image = Image.fromarray(effect_mx)
+                c = ax.imshow(effect_mx - effect_mx.T)
+                cbar = fig.colorbar(c)
+                plt.show()
+                plt.close()
 
             for hor in range(effect_mx.shape[0]):
                 for ver in range(effect_mx.shape[1]):
                     if hor != ver:
                         all_e_diff.append(effect_mx[hor, ver] - effect_mx[ver, hor])
 
-        print('Progress: ', int((i/images_to_scan)*100), '%')
-        if i >= images_to_scan:
-            break
+            print('Progress: ', int((i/images_to_scan)*100), '%')
+            if i >= images_to_scan:
+                break
 
-    plt.hist(all_e_diff)
+        np.save(npname, all_e_diff)
+
+    else:
+        print('Loading from npy')
+        all_e_diff = np.load(npname)
+
+    # lendip = len(all_e_diff)/35
+    # gendip = int((lendip**2)/50)
+    # print('Bins ', gendip)
+    print(len(all_e_diff))
+    plt.hist(all_e_diff, bins=70)
     plt.show()
