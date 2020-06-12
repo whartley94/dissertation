@@ -15,17 +15,20 @@ import numpy as np
 
 if __name__ == '__main__':
     np.random.seed(1)
-    images_to_scan = 20  # Number of images to process
-    n = 6 # Number of points to sample
+    images_to_scan = 40  # Number of images to process
+    n = 10  # Number of points to sample
     P = 5  # Point sizes
     init_points = 10  # Number of points to use for 'before' image
-    npname = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/resources/its' + str(images_to_scan) +\
-             'n' + str(n) + 'p' + str(P) + 'ip' + str(init_points) + '.npy'
+    root = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/'
+    name = root + 'resources/its' + str(images_to_scan) +\
+             'n' + str(n) + 'p' + str(P) + 'ip' + str(init_points)
+    npname = name + '.npy'
 
     if not os.path.isfile(npname):
 
-        show_images = True
-        show_effect_mx = True
+        show_images = False
+        show_effect_mx = False
+        save_figs = False
         to_visualize = ['gray', 'hint', 'hint_ab', 'fake_entr', 'real', 'fake_reg', 'real_ab', 'fake_ab_reg', ]
         to_display = 'fake_reg'
         which_channel = 'fake_reg'  # Which channel to scan for colour symmetry checks?
@@ -87,6 +90,7 @@ if __name__ == '__main__':
                 locations[loc, 0] = h
                 locations[loc, 1] = w
                 point = visuals[which_channel][:, :, h:h + P, w:w + P]
+                # print('point', point)
                 lab_colours[loc] = util.mean_pixel(point, opt, True)
                 rgb_colours[loc] = util.mean_pixel(point, opt, False)
             # print('Locations: ', locations)
@@ -109,6 +113,7 @@ if __name__ == '__main__':
                     h = locations[loc, 0]
                     w = locations[loc, 1]
                     point = visuals_n[which_channel][:, :, h:h + P, w:w + P]
+                    # print('point', point)
                     lab_colours_after = util.mean_pixel(point, opt, True)
                     rgb_colours_after[loc] = util.mean_pixel(point, opt, False)
                     effect_mx[j, loc] = np.linalg.norm(rgb_colours[loc] - rgb_colours_after[loc])
@@ -139,7 +144,11 @@ if __name__ == '__main__':
                             image_pil = Image.fromarray(real_im)
                             ax2.imshow(image_pil)
 
-                            plt.show()
+                            if i <= 2 and save_figs:
+                                figname = root + 'python_experiment_scripts/symmetry_results/' + 'image' + str(i) + 'point' + str(j) + '.png'
+                                plt.savefig(figname)
+                            else:
+                                plt.show()
                             plt.close()
 
             if show_effect_mx:
@@ -148,7 +157,11 @@ if __name__ == '__main__':
                 # fx_image = Image.fromarray(effect_mx)
                 c = ax.imshow(effect_mx)
                 cbar = fig.colorbar(c)
-                plt.show()
+                if i <= 2 and save_figs:
+                    figname = root + 'python_experiment_scripts/symmetry_results/' + 'image' + str(i) + 'M' + '.png'
+                    plt.savefig(figname)
+                else:
+                    plt.show()
                 plt.close()
 
                 # print(effect_mx)
@@ -156,7 +169,11 @@ if __name__ == '__main__':
                 # fx_image = Image.fromarray(effect_mx)
                 c = ax.imshow(effect_mx - effect_mx.T)
                 cbar = fig.colorbar(c)
-                plt.show()
+                if i <= 2 and save_figs:
+                    figname = root + 'python_experiment_scripts/symmetry_results/' + 'image' + str(i) + 'M-Mt' + '.png'
+                    plt.savefig(figname)
+                else:
+                    plt.show()
                 plt.close()
 
             for hor in range(effect_mx.shape[0]):

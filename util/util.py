@@ -5,13 +5,26 @@ from PIL import Image
 import os
 from collections import OrderedDict
 from IPython import embed
+import matplotlib.pyplot as plt
 
 # Shortcut for getting mean lab value of an area, for visualise_test
 def mean_pixel(point_a, opt, lab=True):
     if lab:
         point_a = rgb2lab(point_a, opt)
     point_a = point_a.cpu().float().numpy()
+    point_a = np.clip(point_a, 0, 1)
     mean_a = np.mean(np.mean(point_a, axis=3), axis=2)[0]
+    # if not lab:
+    #     print(point_a)
+    #     tr = np.transpose(point_a[0])
+    #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 5))
+    #     ax1.imshow(tr)
+    #     tr2 = np.zeros(tr.shape)
+    #     tr2 += mean_a
+    #     ax2.imshow(tr2)
+    #     ax2.set_title(mean_a)
+    #     plt.show()
+    #     plt.close()
     return mean_a
 
 
