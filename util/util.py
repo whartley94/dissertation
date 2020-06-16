@@ -38,6 +38,28 @@ def draw_square(real_im, hb, wb, P, col):
         real_im[hb + P - 1, g, :] = col
     return real_im
 
+
+def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
+    col = col*255
+    if h1 < 0:
+        h1=0
+    if h2 >= opt.loadSize:
+        h2 = h2-1
+    if w1 < 0:
+        w1 = 0
+    if w2 >= opt.loadSize:
+        w2 = w2 - 1
+    for g in np.arange(h1, h2+1):
+        real_im[g, w1, :] = col
+        real_im[g, w2, :] = col
+    for g in np.arange(w1, w2+1):
+        real_im[h1, g, :] = col
+        real_im[h2, g, :] = col
+    return real_im
+
+
+
+
 def draw_fill_square(real_im, hb, wb, P, col, boarder=''):
     col = col*255
     real_im[hb:hb+P, wb:wb+P, :] = col
@@ -59,6 +81,30 @@ def tensor2im(input_image, imtype=np.uint8):
         image_numpy = np.tile(image_numpy, (3, 1, 1))
     image_numpy = np.clip((np.transpose(image_numpy, (1, 2, 0)) ),0, 1) * 255.0
     return image_numpy.astype(imtype)
+
+# Converts a an image array (numpy) to tebsor
+def im2tensor(input_image, type='rgb'):
+    if isinstance(input_image, torch.Tensor):
+        return input_image
+    else:
+        numpy_init = np.zeros((1, input_image.shape[2], input_image.shape[0], input_image.shape[1]))
+        image_numpy = np.transpose(input_image, (2, 0, 1))
+        # if type == 'unknown':
+            # print(image_numpy)
+        if type == 'rgb':
+            image_numpy = np.clip(image_numpy, 0, 255)/255
+        numpy_init[0, :, :, :] = image_numpy
+        # image_tensor = torch.from_numpy(numpy_init)
+        image_tensor = torch.tensor(numpy_init, dtype=torch.float32)
+        # print(image_tensor.shape)
+        # print(type(image_tensor))
+        # print(image_tensor)
+        return image_tensor
+    # image_numpy = image_tensor[0].cpu().float().numpy()
+    # if image_numpy.shape[0] == 1:
+    #     image_numpy = np.tile(image_numpy, (3, 1, 1))
+    # image_numpy = np.clip((np.transpose(image_numpy, (1, 2, 0)) ),0, 1) * 255.0
+    # return image_numpy.astype(imtype)
 
 
 def diagnose_network(net, name='network'):
@@ -187,7 +233,7 @@ def lab2xyz(lab):
     y_int = (lab[:,0,:,:]+16.)/116.
     x_int = (lab[:,1,:,:]/500.) + y_int
     z_int = y_int - (lab[:,2,:,:]/200.)
-    if(z_int.is_cuda):
+    if z_int.is_cuda:
         z_int = torch.max(torch.Tensor((0,)).cuda(), z_int)
     else:
         z_int = torch.max(torch.Tensor((0,)), z_int)
