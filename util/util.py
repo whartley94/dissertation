@@ -41,6 +41,13 @@ def draw_square(real_im, hb, wb, P, col):
 
 def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
     col = col*255
+    half_width = int((w2 - w1) / 2)
+    half_height = int((h2 - h1) / 2)
+    col2 = np.mean(real_im[h2-half_height, w2-half_width, :])
+    if col2 > 127.5:
+        col = 0
+    if col2 <= 127.5:
+        col = 255
     if h1 < 0:
         h1=0
     if h2 >= opt.loadSize:
@@ -393,12 +400,16 @@ def decode_ind_ab(data_q, opt):
     #   data_q      Nx1xHxW \in [0,Q)
     # OUTPUTS
     #   data_ab     Nx2xHxW \in [-1,1]
+    #
+    # data_a = data_q/opt.A
+    # data_b = data_q - data_a*opt.A
+    assert isinstance(opt.A, (int, float))
+    data_b = np.mod(data_q, opt.A)
+    data_a = (data_q-data_b)/opt.A
 
-    data_a = data_q/opt.A
-    data_b = data_q - data_a*opt.A
-    data_ab = torch.cat((data_a,data_b),dim=1)
+    data_ab = torch.cat((data_a, data_b), dim=1)
 
-    if(data_q.is_cuda):
+    if data_q.is_cuda:
         type_out = torch.cuda.FloatTensor
     else:
         type_out = torch.FloatTensor
