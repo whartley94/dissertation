@@ -302,7 +302,6 @@ def to_X(ljab):
     my_X[:, 2] = flat3
     return my_X
 
-
 def plot_raw_data(data):
     fig, ax = plt.subplots(figsize=(5, 5))
     fx_image = util.tensor2im(data)
@@ -492,6 +491,81 @@ def zhang_bin_box_finder(binned_tensor, rgb_image_array, ab_bins_coloured):
     plt.show()
     plt.close()
 
+def mask_off(binned_array, current_h, current_w, center_pixel, mask):
+    current_h = np.clip(current_h, 0, mask.shape[0]-1)
+    current_w = np.clip(current_w, 0, mask.shape[1]-1)
+    diff = binned_array[current_h, current_w] - center_pixel
+    if diff == 0:
+        neighbour_mask = mask[current_h - 1:current_h + 2, current_w - 1:current_w + 2]
+        sum_neighbor = np.sum(neighbour_mask)
+        if sum_neighbor > 0:
+            mask[current_h, current_w] = 1
+
+def zhang_bin_area_finder(binned_tensor, rgb_image_array, ab_bins_coloured):
+    image_shape = rgb_image_array.shape[:2]
+    H, W, C = rgb_image_array.shape
+    indexes = np.mgrid[0:H, 0:W]
+
+    global h
+    h = np.random.randint(H)
+    global w
+    w = np.random.randint(W)
+    binned_image = np.asarray(binned_tensor[0, 0, :, :])
+    mean_threshold = 0
+    center_pixel = int(binned_tensor[0, 0, h:h + 1, w:w + 1])
+    print('Cp', center_pixel)
+
+    global mask
+    mask = np.zeros(binned_image.shape)
+    mask[h, w] = 1
+    binned_array = binned_image.astype(int)
+
+    go = True
+    move = 2
+    current_h = h
+    current_w = w
+
+    while go:
+        mask_old = copy.deepcopy(mask)
+        # Move To Next Ring
+        current_h -= 1
+        current_w -= 1
+        mask_off(binned_array, current_h, current_w, center_pixel, mask)
+
+        # Right
+        for m in range(move):
+            current_w += 1
+            mask_off(binned_array, current_h, current_w, center_pixel, mask)
+        # Down
+        for m in range(move):
+            current_h += 1
+            mask_off(binned_array, current_h, current_w, center_pixel, mask)
+        # Left
+        for m in range(move):
+            current_w -= 1
+            mask_off(binned_array, current_h, current_w, center_pixel, mask)
+        # Up
+        for m in range(move):
+            current_h -= 1
+            mask_off(binned_array, current_h, current_w, center_pixel, mask)
+
+        move += 2
+        if np.array_equal(mask_old, mask):
+            plot_spiral()
+            break
+
+
+def plot_spiral():
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 6))
+    fx_image = util.tensor2im(rgb_image_array_orig)
+    c = ax1.imshow(fx_image)
+    ax1.scatter(w, h)
+    ax2.imshow(ab_bins_coloured)
+    ax3.imshow(mask)
+    plt.show()
+    plt.close()
+
+
 def rgb_boxfinder(rgb_image_array):
     image_shape = rgb_image_array.shape[:2]
     N, C, H, W = data_raw[0].shape
@@ -622,7 +696,7 @@ if __name__ == '__main__':
 
         # Reshaping & Scaling & Concatenating with indexed
         # Generate & Rescale Indexes
-        indexes = np.arange(just_ab_asrgb_array_smoothed.shape[0], just_ab_asrgb_array_smoothed.shape[1])
+        # indexes = np.arange(just_ab_asrgb_array_smoothed.shape[0], just_ab_asrgb_array_smoothed.shape[1])
         indexes = np.mgrid[0:just_ab_asrgb_array_smoothed.shape[0], 0:just_ab_asrgb_array_smoothed.shape[1]].transpose()
         indexes = indexes/30
 
@@ -653,7 +727,8 @@ if __name__ == '__main__':
         # lab_box_finder(just_ab_image_array,rgb_image_array)
 
         ab_bins, ab_bins_coloured = zhang_bins(just_ab_smoothed_asab, lab_tensor, i, False)
-        zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
+        # zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
+        zhang_bin_area_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
 
 
 

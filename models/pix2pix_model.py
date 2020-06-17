@@ -115,7 +115,7 @@ class Pix2PixModel(BaseModel):
         self.mask_B = input['mask_B'].to(self.device)
         self.mask_B_nc = self.mask_B + self.opt.mask_cent
 
-        self.real_B_enc = util.encode_ab_ind(self.real_B[:, :, ::4, ::4], self.opt)
+        self._B_enc = util.encode_ab_ind(self.real_B[:, :, ::4, ::4], self.opt)
 
     def forward(self):
         (self.fake_B_class, self.fake_B_reg) = self.netG(self.real_A, self.hint_B, self.mask_B)
