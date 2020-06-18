@@ -5,6 +5,7 @@ from models import create_model
 from util import html
 from PIL import Image
 import matplotlib.pyplot as plt
+import matplotlib
 import copy
 import time
 import cv2 as cv
@@ -501,7 +502,7 @@ def mask_off(binned_array, current_h, current_w, center_pixel, mask):
         if sum_neighbor > 0:
             mask[current_h, current_w] = 1
 
-def zhang_bin_area_finder(binned_tensor, rgb_image_array, ab_bins_coloured):
+def zhang_bin_area_spiraler(binned_tensor, rgb_image_array, ab_bins_coloured):
     image_shape = rgb_image_array.shape[:2]
     H, W, C = rgb_image_array.shape
     indexes = np.mgrid[0:H, 0:W]
@@ -554,7 +555,6 @@ def zhang_bin_area_finder(binned_tensor, rgb_image_array, ab_bins_coloured):
             plot_spiral()
             break
 
-
 def plot_spiral():
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 6))
     fx_image = util.tensor2im(rgb_image_array_orig)
@@ -564,7 +564,6 @@ def plot_spiral():
     ax3.imshow(mask)
     plt.show()
     plt.close()
-
 
 def rgb_boxfinder(rgb_image_array):
     image_shape = rgb_image_array.shape[:2]
@@ -617,6 +616,75 @@ def rgb_boxfinder(rgb_image_array):
     ax3.imshow(pixels)
     plt.show()
     plt.close()
+
+def dbscan_encoded_indexed(encoded, encoded_coloured):
+    encoded_img = np.asarray(encoded[0, :, :, :])
+    encoded_flat = encoded_img.flatten()
+    # uniques = np.unique(encoded_flat)
+    # for unique in uniques:
+    #     rand = np.random.randint(-100, 100)
+    #     print(rand)
+    #     encoded_img[encoded_img==unique] += rand
+    # print(encoded_img)
+    indexes = np.mgrid[0:encoded_img.shape[1], 0:encoded_img.shape[2]]
+    # indexes = indexes/30
+    both = np.concatenate((encoded_img, indexes), axis=0)
+    both = np.transpose(both, (1, 2, 0))
+    both_flat = both.reshape(both.shape[0]* both.shape[1], both.shape[2])
+
+    print('Scaler')
+    # scaler = StandardScaler()
+    both_scaled = sklearn.preprocessing.scale(both_flat, axis=0)
+    scale_rescale = 20
+    both_scaled[:, 1] = both_scaled[:, 1] * scale_rescale
+    both_scaled[:, 2] = both_scaled[:, 2] * scale_rescale
+    both_scaled[:, 0] = both_scaled[:, 0] * 5
+    # ab_X_indexed_flat = sklearn.preprocessing.scale(ab_X_indexed_flat, axis=0)
+    # ab_X_indexed_flat[:, 0:2]
+    # scaler.fit(ab_X)
+    # ab_X = scaler.transform(ab_X)
+    print('Scaler Done')
+
+    print('Starting')
+    eps = .5
+    min_samples = 5
+    means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    print('Done')
+    # centers = [means.core_sample_indices_[i] for i in means.labels_]
+    # centers = np.asarray(centers).astype(int)
+    labels_mx = means.labels_.reshape(both[:,:,0].shape)
+    # centers = centers.reshape(just_ab_image_array.shape)
+
+    print('Starting')
+    eps = .5
+    min_samples = 5
+    means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # centers = [means2.cluster_centers_[i] for i in means2.labels_]
+    # centers = np.asarray(centers).astype(int)
+    labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
+    # centers2 = centers.reshape(ab_X_indexed.shape)
+    print('Done')
+
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 5))
+    # fx_image = util.tensor2im(rgb_img)
+    cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+    c = ax1.imshow(labels_mx, cmap=cmap)
+    # ax2.imshow(centers2[:, :, 2:])
+    # ax2.imshow(labels_mx2)
+    ax2.imshow(labels_mx2, cmap=cmap)
+    ax3.imshow(rgb_image_array_orig)
+    ax4.imshow(encoded_img[0])
+    ax5.imshow(encoded_coloured)
+    plt.show()
+
+
+    # print(labels_mx)
+    # for k in range(np.max(labels_mx)):
+    #     msk = np.zeros(labels_mx.shape)
+    #     msk[labels_mx==k] = 1
+    # # plt.imshow(labels_mx, cmap=cmap)
+    #     plt.imshow(msk)
+    #     plt.show()
 
 if __name__ == '__main__':
     np.random.seed(1)
@@ -728,7 +796,9 @@ if __name__ == '__main__':
 
         ab_bins, ab_bins_coloured = zhang_bins(just_ab_smoothed_asab, lab_tensor, i, False)
         # zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
-        zhang_bin_area_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
+        # zhang_bin_area_spiraler(ab_bins, rgb_image_array_orig, ab_bins_coloured)
+        dbscan_encoded_indexed(ab_bins, ab_bins_coloured)
+
 
 
 
