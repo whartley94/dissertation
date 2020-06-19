@@ -617,7 +617,15 @@ def rgb_boxfinder(rgb_image_array):
     plt.show()
     plt.close()
 
-def dbscan_encoded_indexed(encoded, encoded_coloured):
+def points_in_circle_np(radius, x0=0, y0=0, ):
+    x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
+    y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
+    x, y = np.where((x_[:, np.newaxis] - x0) ** 2 + (y_ - y0) ** 2 <= radius ** 2)
+    # x, y = np.where((np.hypot((x_-x0)[:,np.newaxis], y_-y0)<= radius)) # alternative implementation
+    for x, y in zip(x_[x], y_[y]):
+        yield x, y
+
+def dbscan_encoded_indexed(encoded, encoded_coloured, vis=True):
     encoded_img = np.asarray(encoded[0, :, :, :])
     encoded_flat = encoded_img.flatten()
     # uniques = np.unique(encoded_flat)
@@ -632,50 +640,54 @@ def dbscan_encoded_indexed(encoded, encoded_coloured):
     both = np.transpose(both, (1, 2, 0))
     both_flat = both.reshape(both.shape[0]* both.shape[1], both.shape[2])
 
-    print('Scaler')
+    # print('Scaler')
     # scaler = StandardScaler()
     both_scaled = sklearn.preprocessing.scale(both_flat, axis=0)
     scale_rescale = 20
     both_scaled[:, 1] = both_scaled[:, 1] * scale_rescale
     both_scaled[:, 2] = both_scaled[:, 2] * scale_rescale
-    both_scaled[:, 0] = both_scaled[:, 0] * 5
+    both_scaled[:, 0] = both_scaled[:, 0] * 6
     # ab_X_indexed_flat = sklearn.preprocessing.scale(ab_X_indexed_flat, axis=0)
     # ab_X_indexed_flat[:, 0:2]
     # scaler.fit(ab_X)
     # ab_X = scaler.transform(ab_X)
-    print('Scaler Done')
+    # print('Scaler Done')
 
-    print('Starting')
+    # print('Starting')
     eps = .5
     min_samples = 5
     means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
-    print('Done')
+    # print('Done')
     # centers = [means.core_sample_indices_[i] for i in means.labels_]
     # centers = np.asarray(centers).astype(int)
     labels_mx = means.labels_.reshape(both[:,:,0].shape)
     # centers = centers.reshape(just_ab_image_array.shape)
+    #
+    # # print('Starting')
+    # eps = .5
+    # min_samples = 5
+    # means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # # centers = [means2.cluster_centers_[i] for i in means2.labels_]
+    # # centers = np.asarray(centers).astype(int)
+    # labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
+    # # centers2 = centers.reshape(ab_X_indexed.shape)
+    # # print('Done')
 
-    print('Starting')
-    eps = .5
-    min_samples = 5
-    means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
-    # centers = [means2.cluster_centers_[i] for i in means2.labels_]
-    # centers = np.asarray(centers).astype(int)
-    labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
-    # centers2 = centers.reshape(ab_X_indexed.shape)
-    print('Done')
 
-    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 5))
-    # fx_image = util.tensor2im(rgb_img)
-    cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
-    c = ax1.imshow(labels_mx, cmap=cmap)
-    # ax2.imshow(centers2[:, :, 2:])
-    # ax2.imshow(labels_mx2)
-    ax2.imshow(labels_mx2, cmap=cmap)
-    ax3.imshow(rgb_image_array_orig)
-    ax4.imshow(encoded_img[0])
-    ax5.imshow(encoded_coloured)
-    plt.show()
+    if vis:
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
+        # fx_image = util.tensor2im(rgb_img)
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(labels_mx, cmap=cmap)
+        # ax2.imshow(centers2[:, :, 2:])
+        # ax2.imshow(labels_mx2)
+        # ax2.imshow(labels_mx2, cmap=cmap)
+        ax2.imshow(rgb_image_array_orig)
+        ax3.imshow(encoded_img[0])
+        ax4.imshow(encoded_coloured)
+        plt.show()
+
+    return labels_mx
 
 
     # print(labels_mx)
@@ -797,7 +809,9 @@ if __name__ == '__main__':
         ab_bins, ab_bins_coloured = zhang_bins(just_ab_smoothed_asab, lab_tensor, i, False)
         # zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
         # zhang_bin_area_spiraler(ab_bins, rgb_image_array_orig, ab_bins_coloured)
-        dbscan_encoded_indexed(ab_bins, ab_bins_coloured)
+        labels_mx = dbscan_encoded_indexed(ab_bins, ab_bins_coloured, False)
+        print(labels_mx)
+        break
 
 
 
