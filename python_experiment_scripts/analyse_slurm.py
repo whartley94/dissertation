@@ -7,11 +7,16 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import re
 
+
 def get_logs(slurm_exp):
     slurm_dirs = []
     for i in os.listdir(slurm_log_dir):
         if '.out' in i and slurm_exp in i:
             slurm_dirs.append(i)
+    # slurm_dirs.sort()
+    slurm_dirs.sort(key=lambda f: int(re.sub('\D', '', f)))
+    # print(slurm_dirs)
+    assert len(slurm_dirs) > 0, 'Probs Mistyped Experiment Number'
     return slurm_dirs
 
 
@@ -101,6 +106,21 @@ def get_final_losses_array(dict_arrs):
     return g_ce_arr, num_dict_exp
 
 
+def plot_batch_size_vs_time_taken():
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111)
+    # ax.set_title(self.name + ' loss over time')
+    ax.scatter(batch_size_arr[trains], times[trains], label='Train')
+    # ax.scatter(batch_size_arr[train_smalls], times[train_smalls], label='Train Small')
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Mean Epoch Time Taken')
+    ax.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.subplots_adjust(right=0.7)
+    plt.show()
+    # plt.savefig(self.mpl_name, bbox_inches="tight", dpi=400)
+    plt.close(fig)
+
+
 def zip_plot(gpu_arr_trains, g_ce_arr_trains, ax, bs, bs_num):
     new_x, new_y = zip(*sorted(zip(gpu_arr_trains[bs], g_ce_arr_trains[bs])))
     ax.plot(new_x, new_y, label='Batch Size ' + str(bs_num))
@@ -135,11 +155,104 @@ def loss_vs_gpu_plot():
     # plt.savefig(self.mpl_name, bbox_inches="tight", dpi=400)
     plt.close(fig)
 
+def plot_loss_dict(loss_dictionary, name, vert_shift=0):
+    num_prints = len(loss_dictionary)
+    times = np.zeros(num_prints)
+    losses = np.zeros(num_prints)
+
+    if num_prints == 0:
+        print('Nothing to show for ' + str(name) + '!')
+    else:
+
+        total_time = 0
+        for i, line in enumerate(loss_dictionary):
+            total_time += np.float(line[' time'])
+            times[i] = total_time
+            losses[i] = line[' G_L1_reg']
+
+        plt.plot(times, losses+vert_shift, label=name)
+        # plt.title(name)
+        # plt.show()
+
+
+def plot_batch_gpu_time_taken():
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(batch_size_arr[trains], gpu_arr[trains], times[trains])
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Number of GPUs')
+    ax.set_zlabel('Mean Time Taken (One Epoch)')
+    plt.title('Train Phase')
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(batch_size_arr[train_smalls], gpu_arr[train_smalls], times[train_smalls])
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Number of GPUs')
+    ax.set_zlabel('Mean Time Taken (One Epoch)')
+    plt.title('Train Small Phase')
+    plt.show()
+
+
+def plot_high_gpu_loss_graphs():
+    for i, dict in enumerate(dict_arrs):
+        # print(name_arr[i])
+        if 'lsm1' in name_arr[i]:
+            # print(i)
+            # if i > 25:
+            plot_loss_dict(dict, name_arr[i])
+    plt.ylabel('Loss')
+    plt.xlabel('Time')
+    plt.legend()
+    plt.show()
+
+
+def plot_batch_gpu_ratio():
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # normalized1 = (g_ce_arr[trains]-np.nanmin(g_ce_arr[trains]))/(np.nanmax(g_ce_arr[trains])-np.nanmin(g_ce_arr[trains]))
+    # normalized2 = (times[trains]-np.nanmin(times[trains]))/(np.nanmax(times[trains])-np.nanmin(times[trains]))
+
+    # normalized3 = 1 / (1.927 - g_ce_arr[trains])
+    trains_or_smalls = trains
+
+    normalized3 = g_ce_arr[trains_or_smalls] / np.nanmax(g_ce_arr[trains_or_smalls])
+    normalized4 = times[trains_or_smalls] / np.nanmax(times[trains_or_smalls])
+
+    mulp = g_ce_arr[trains_or_smalls] * times[trains_or_smalls]
+    mulp2 = normalized3 * normalized4
+    # print(mulp)
+    ax.scatter(batch_size_arr[trains_or_smalls], gpu_arr[trains_or_smalls], mulp2)
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Number of GPUs')
+    ax.set_zlabel('\'Ratio\' Loss & Time Taken')
+    plt.show()
+
+
+def plot_batch_gpu_loss():
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(batch_size_arr[trains], gpu_arr[trains], g_ce_arr[trains])
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Number of GPUs')
+    ax.set_zlabel('Loss After 5 Epochs')
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(batch_size_arr[train_smalls], gpu_arr[train_smalls], g_ce_arr[train_smalls])
+    ax.set_xlabel('Batch Size')
+    ax.set_ylabel('Number of GPUs')
+    ax.set_zlabel('Loss After 5 Epochs')
+    plt.show()
+
 
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='947669')
+    slurm_dirs = get_logs(slurm_exp='94779')
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.
     time_epoch_pre = get_epoch_times_variable_length(slurm_dirs)
@@ -166,73 +279,27 @@ if __name__ == '__main__':
     g_ce_arr_trains = g_ce_arr[trains]
     gpu_arr_trains = gpu_arr[trains]
 
-    # Do plotting
-    loss_vs_gpu_plot()
+# -------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
+    # DO PLOTTING:
+    # Plot Loss Vs Number Of GPUs
+    # loss_vs_gpu_plot()
 
-    # fig = plt.figure(figsize=(10, 5))
-    # ax = fig.add_subplot(111)
-    # # ax.set_title(self.name + ' loss over time')
-    # ax.scatter(batch_size_arr[trains], times[trains], label='Train')
-    # # ax.scatter(batch_size_arr[train_smalls], times[train_smalls], label='Train Small')
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Mean Epoch Time Taken')
-    # ax.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
-    # plt.subplots_adjust(right=0.7)
-    # plt.show()
-    # # plt.savefig(self.mpl_name, bbox_inches="tight", dpi=400)
-    # plt.close(fig)
-    # #
-    #
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(batch_size_arr[trains], gpu_arr[trains], times[trains])
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Number of GPUs')
-    # ax.set_zlabel('Mean Time Taken (One Epoch)')
-    # # plt.show()
-    #
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(batch_size_arr[train_smalls], gpu_arr[train_smalls], times[train_smalls])
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Number of GPUs')
-    # ax.set_zlabel('Mean Time Taken (One Epoch)')
-    # # plt.show()
+    # Plot The Loss Graph For A Given Out File list of Dictionaries.
+    plot_high_gpu_loss_graphs()
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(batch_size_arr[trains], gpu_arr[trains], g_ce_arr[trains])
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Number of GPUs')
-    # ax.set_zlabel('Loss After 5 Epochs')
-    # plt.show()
+    # Plot graph for batch size vs time taken.
+    # plot_batch_size_vs_time_taken()
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(batch_size_arr[train_smalls], gpu_arr[train_smalls], g_ce_arr[train_smalls])
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Number of GPUs')
-    # ax.set_zlabel('Loss After 5 Epochs')
-    # plt.show()
+    # 3D Plot graph for batch & GPUs vs time taken.
+    # plot_batch_gpu_time_taken()
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    #
-    # # normalized1 = (g_ce_arr[trains]-np.nanmin(g_ce_arr[trains]))/(np.nanmax(g_ce_arr[trains])-np.nanmin(g_ce_arr[trains]))
-    # # normalized2 = (times[trains]-np.nanmin(times[trains]))/(np.nanmax(times[trains])-np.nanmin(times[trains]))
-    #
-    # # normalized3 = 1 / (1.927 - g_ce_arr[trains])
-    # trains_or_smalls = trains
-    #
-    # normalized3 =  g_ce_arr[trains_or_smalls]/np.nanmax(g_ce_arr[trains_or_smalls])
-    # normalized4 = times[trains_or_smalls]/np.nanmax(times[trains_or_smalls])
-    #
-    # mulp = g_ce_arr[trains_or_smalls] * times[trains_or_smalls]
-    # mulp2 = normalized3 * normalized4
-    # # print(mulp)
-    # ax.scatter(batch_size_arr[trains_or_smalls], gpu_arr[trains_or_smalls], mulp2)
-    # ax.set_xlabel('Batch Size')
-    # ax.set_ylabel('Number of GPUs')
-    # ax.set_zlabel('\'Ratio\' Loss & Time Taken')
-    # plt.show()
+    # 3D Pot for batch & GPUs vs loss
+    # plot_batch_gpu_loss()
+
+    # 3D Pot for batch & GPUs vs ratio of loss and time taken
+    # plot_batch_gpu_ratio()
+
