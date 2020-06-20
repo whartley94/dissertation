@@ -176,6 +176,9 @@ dest_path=/home/${USER}/git/dissertation/checkpoints
 rsync --archive --update --compress --progress ${cpoint_path}/ ${dest_path}
 echo "Rsync done"
 
+echo "Removing Results From Scratch"
+rm -rv ${cpoint_path}
+echo "Remove done"
 
 
 # =========================
