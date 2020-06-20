@@ -401,6 +401,30 @@ def decode_ind_ab(data_q, opt):
     # OUTPUTS
     #   data_ab     Nx2xHxW \in [-1,1]
     #
+    data_a = data_q/opt.A
+    data_b = data_q - data_a*opt.A
+    # assert isinstance(opt.A, (int, float))
+    # data_b = np.mod(data_q, opt.A)
+    # data_a = (data_q-data_b)/opt.A
+
+    data_ab = torch.cat((data_a, data_b), dim=1)
+
+    if data_q.is_cuda:
+        type_out = torch.cuda.FloatTensor
+    else:
+        type_out = torch.FloatTensor
+    data_ab = ((data_ab.type(type_out)*opt.ab_quant) - opt.ab_max)/opt.ab_norm
+
+    return data_ab
+
+
+def my_decode_ind_ab(data_q, opt):
+    # Decode index into ab value
+    # INPUTS
+    #   data_q      Nx1xHxW \in [0,Q)
+    # OUTPUTS
+    #   data_ab     Nx2xHxW \in [-1,1]
+    #
     # data_a = data_q/opt.A
     # data_b = data_q - data_a*opt.A
     assert isinstance(opt.A, (int, float))

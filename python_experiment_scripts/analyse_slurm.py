@@ -198,7 +198,7 @@ def plot_batch_gpu_time_taken():
 def plot_high_gpu_loss_graphs():
     for i, dict in enumerate(dict_arrs):
         # print(name_arr[i])
-        if 'lsm1' in name_arr[i]:
+        if 'lsm0' in name_arr[i]:
             # print(i)
             # if i > 25:
             plot_loss_dict(dict, name_arr[i])
@@ -252,7 +252,7 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='94779')
+    slurm_dirs = get_logs(slurm_exp='950503')
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.
     time_epoch_pre = get_epoch_times_variable_length(slurm_dirs)
