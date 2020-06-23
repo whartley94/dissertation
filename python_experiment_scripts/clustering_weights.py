@@ -201,60 +201,61 @@ def k_means_vs_psnr(just_ab_smoothed_asab, l_tensor):
         plt.close()
 
 
-# def zhang_bins(just_ab_smoothed_asab, l_tensor, i, vis=True):
-#     # print('Go')
-#     n_clusterss = 25
-#     psnrs = []
-#     ks = []
-#     times = []
-#     just_ab_smoothed_asab = torch.reshape(just_ab_smoothed_asab, (1, 2, 250, 250))
-#     encoded_ab = util.encode_ab_ind(just_ab_smoothed_asab, opt)
-#     # encoded_ab = encoded_ab
-#     # encoded_ab_flat = np.asarray(encoded_ab).reshape(250*250, 1)
-#     encoded_img = encoded_ab.reshape(250, 250)
-#     decoded_ab = util.my_decode_ind_ab(encoded_ab, opt)
-#
-#     center_lab = np.zeros((250, 250, 3))
-#     center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
-#     center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
-#     center_lab[:, :, 0] = l_tensor[0, 0, :, :]
-#     center_lab_convert = util.im2tensor(center_lab, 'unknown')
-#     center_lab_convert = util.lab2rgb(center_lab_convert, opt)
-#     center_lab_img = util.tensor2im(center_lab_convert)
-#
-#     center_lab = np.zeros((250, 250, 3))
-#     center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
-#     center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
-#     # center_lab[:, :, 0] = l_tensor[0, 0, :, :]
-#     center_lab_convert = util.im2tensor(center_lab, 'unknown')
-#     center_lab_convert = util.lab2rgb(center_lab_convert, opt)
-#     center_lab_img2 = util.tensor2im(center_lab_convert)
-#
-#     center_lab = np.zeros((250, 250, 3))
-#     # center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
-#     # center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
-#     center_lab[:, :, :] = np.transpose(l_tensor[0], (1, 2, 0))
-#     center_lab_convert = util.im2tensor(center_lab, 'unknown')
-#     center_lab_convert = util.lab2rgb(center_lab_convert, opt)
-#     center_lab_img3 = util.tensor2im(center_lab_convert)
-#
-#     if vis:
-#         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
-#         ax1.imshow(encoded_img)
-#         ax2.imshow(center_lab_img2)
-#         ax3.imshow(center_lab_img)
-#         ax4.imshow(center_lab_img3)
-#         ax1.set_title('Colour Bin Indexes')
-#         ax2.set_title('Colour Bins Coloured')
-#         ax3.set_title('Colour Bins with Original L')
-#         ax4.set_title('Original Image')
-#
-#         plt.show()
-#         plt.tight_layout()
-#         # plt.savefig('bin_results/example_' + str(i) + '.png')
-#         plt.close()
-#
-#     return encoded_ab, center_lab_img2
+def zhang_bins(just_ab_smoothed_asab, l_tensor, i, vis=True):
+    # print('Go')
+    n_clusterss = 25
+    psnrs = []
+    ks = []
+    times = []
+    # print(just_ab_smoothed_asab.shape)
+    just_ab_smoothed_asab = torch.reshape(just_ab_smoothed_asab, (1, 2, 250, 250))
+    encoded_ab = util.encode_ab_ind(just_ab_smoothed_asab, opt)
+    # encoded_ab = encoded_ab
+    # encoded_ab_flat = np.asarray(encoded_ab).reshape(250*250, 1)
+    encoded_img = encoded_ab.reshape(250, 250)
+    decoded_ab = util.my_decode_ind_ab(encoded_ab, opt)
+
+    center_lab = np.zeros((250, 250, 3))
+    center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    center_lab[:, :, 0] = l_tensor[0, 0, :, :]
+    center_lab_convert = util.im2tensor(center_lab, 'unknown')
+    center_lab_convert = util.lab2rgb(center_lab_convert, opt)
+    center_lab_img = util.tensor2im(center_lab_convert)
+
+    center_lab = np.zeros((250, 250, 3))
+    center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    # center_lab[:, :, 0] = l_tensor[0, 0, :, :]
+    center_lab_convert = util.im2tensor(center_lab, 'unknown')
+    center_lab_convert = util.lab2rgb(center_lab_convert, opt)
+    center_lab_img2 = util.tensor2im(center_lab_convert)
+
+    center_lab = np.zeros((250, 250, 3))
+    # center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    # center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    center_lab[:, :, :] = np.transpose(l_tensor[0], (1, 2, 0))
+    center_lab_convert = util.im2tensor(center_lab, 'unknown')
+    center_lab_convert = util.lab2rgb(center_lab_convert, opt)
+    center_lab_img3 = util.tensor2im(center_lab_convert)
+
+    if vis:
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
+        ax1.imshow(encoded_img)
+        ax2.imshow(center_lab_img2)
+        ax3.imshow(center_lab_img)
+        ax4.imshow(center_lab_img3)
+        ax1.set_title('Colour Bin Indexes')
+        ax2.set_title('Colour Bins Coloured')
+        ax3.set_title('Colour Bins with Original L')
+        ax4.set_title('Original Image')
+
+        plt.show()
+        plt.tight_layout()
+        # plt.savefig('bin_results/example_' + str(i) + '.png')
+        plt.close()
+
+    return encoded_ab, center_lab_img2
 
 
 def cluster_ab_indexed(ab_X, ab_X_indexed_flat, ab_X_indexed, just_ab_image_array):
@@ -639,90 +640,131 @@ def points_in_circle_np(radius, x0=0, y0=0, ):
         yield x, y
 
 
-# def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, vis=True):
-#     encoded_img = np.asarray(encoded[0, :, :, :])
-#     encoded_flat = encoded_img.flatten()
-#     # uniques = np.unique(encoded_flat)
-#     # for unique in uniques:
-#     #     rand = np.random.randint(-100, 100)
-#     #     print(rand)
-#     #     encoded_img[encoded_img==unique] += rand
-#     # print(encoded_img)
-#     indexes = np.mgrid[0:encoded_img.shape[1], 0:encoded_img.shape[2]]
-#     # indexes = indexes/30
-#     both = np.concatenate((encoded_img, indexes), axis=0)
-#     both = np.transpose(both, (1, 2, 0))
-#     both_flat = both.reshape(both.shape[0]* both.shape[1], both.shape[2])
-#
-#     # print('Scaler')
-#     # scaler = StandardScaler()
-#     both_scaled = sklearn.preprocessing.scale(both_flat, axis=0)
-#     scale_rescale = 20
-#     both_scaled[:, 1] = both_scaled[:, 1] * scale_rescale
-#     both_scaled[:, 2] = both_scaled[:, 2] * scale_rescale
-#     both_scaled[:, 0] = both_scaled[:, 0] * 6
-#     # ab_X_indexed_flat = sklearn.preprocessing.scale(ab_X_indexed_flat, axis=0)
-#     # ab_X_indexed_flat[:, 0:2]
-#     # scaler.fit(ab_X)
-#     # ab_X = scaler.transform(ab_X)
-#     # print('Scaler Done')
-#
-#     # print('Starting')
-#     eps = .5
-#     min_samples = 5
-#     means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
-#     # print('Done')
-#     # centers = [means.core_sample_indices_[i] for i in means.labels_]
-#     # centers = np.asarray(centers).astype(int)
-#     labels_mx = means.labels_.reshape(both[:,:,0].shape)
-#     # centers = centers.reshape(just_ab_image_array.shape)
-#     #
-#     # # print('Starting')
-#     # eps = .5
-#     # min_samples = 5
-#     # means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
-#     # # centers = [means2.cluster_centers_[i] for i in means2.labels_]
-#     # # centers = np.asarray(centers).astype(int)
-#     # labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
-#     # # centers2 = centers.reshape(ab_X_indexed.shape)
-#     # # print('Done')
-#
-#
-#     if vis:
-#         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
-#         # fx_image = util.tensor2im(rgb_img)
-#         cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
-#         c = ax1.imshow(labels_mx, cmap=cmap)
-#         # ax2.imshow(centers2[:, :, 2:])
-#         # ax2.imshow(labels_mx2)
-#         # ax2.imshow(labels_mx2, cmap=cmap)
-#         ax2.imshow(util.tensor2im(rgb_image_array_orig))
-#         ax3.imshow(encoded_img[0])
-#         ax4.imshow(encoded_coloured)
-#         plt.show()
-#
-#     return labels_mx
+def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, lab_orig, vis=True):
+    encoded_img = np.asarray(encoded[0, :, :, :])
+    encoded_flat = encoded_img.flatten()
+    # uniques = np.unique(encoded_flat)
+    # for unique in uniques:
+    #     rand = np.random.randint(-100, 100)
+    #     print(rand)
+    #     encoded_img[encoded_img==unique] += rand
+    # print(encoded_img)
+    indexes = np.mgrid[0:encoded_img.shape[1], 0:encoded_img.shape[2]]
+    # indexes = indexes/30
+    both = np.concatenate((encoded_img, indexes), axis=0)
+    both = np.transpose(both, (1, 2, 0))
+    both_flat = both.reshape(both.shape[0]* both.shape[1], both.shape[2])
+
+    # print('Scaler')
+    # scaler = StandardScaler()
+    both_scaled = sklearn.preprocessing.scale(both_flat, axis=0)
+    scale_rescale = 20
+    both_scaled[:, 1] = both_scaled[:, 1] * scale_rescale
+    both_scaled[:, 2] = both_scaled[:, 2] * scale_rescale
+    both_scaled[:, 0] = both_scaled[:, 0] * 6
+    # ab_X_indexed_flat = sklearn.preprocessing.scale(ab_X_indexed_flat, axis=0)
+    # ab_X_indexed_flat[:, 0:2]
+    # scaler.fit(ab_X)
+    # ab_X = scaler.transform(ab_X)
+    # print('Scaler Done')
+
+    # print('Starting')
+    eps = .5
+    min_samples = 5
+    means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # print('Done')
+    # centers = [means.core_sample_indices_[i] for i in means.labels_]
+    # centers = np.asarray(centers).astype(int)
+    labels_mx = means.labels_.reshape(both[:,:,0].shape)
+    # centers = centers.reshape(just_ab_image_array.shape)
+    #
+    # # print('Starting')
+    # eps = .5
+    # min_samples = 5
+    # means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # # centers = [means2.cluster_centers_[i] for i in means2.labels_]
+    # # centers = np.asarray(centers).astype(int)
+    # labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
+    # # centers2 = centers.reshape(ab_X_indexed.shape)
+    # # print('Done')
+    lab_orig_flat = np.asarray(lab_orig[0])
+    lab_orig_flat = lab_orig_flat.reshape(3, 250*250)
+    lab_orig_flat = np.transpose(lab_orig_flat, (1, 0))
+    # lab_orig_flat = np.asarray(lab_orig[0].reshape(250*250, 3))
+    n_clusters_ = len(set(means.labels_))
+    clusters = [lab_orig_flat[means.labels_ == m] for m in range(n_clusters_)]
+    cluster_means = [np.mean(cluster, axis=0) for cluster in clusters]
+    # print(means.labels_)
+    cluster_means = np.asarray(cluster_means)
+    print(len(cluster_means))
+    print(n_clusters_)
+    flat_out = [cluster_means[ind+1] for ind in means.labels_]
+    print(flat_out)
+    # print(flat_out)
+    # print('Flat', flat_out)
+
+    flat_out = np.asarray(flat_out)
+    print(flat_out.shape)
+    out = flat_out.reshape(250, 250, 3)
+    out = np.transpose(out, (2, 0, 1))
+    print(out.shape)
+    print(lab_orig.shape)
+    # out[:, :, 0] = np.asarray(lab_orig[0,0,:,:])
+    # out[:, :, 1] = np.asarray(lab_orig[0,1,:,:])
+    # out[:, :, 2] = np.asarray(lab_orig[0,2,:,:])
+    # out[:, :, 1:] = 0
+    # out = lab_orig
+    out_think = torch.zeros_like(lab_orig)
+    out_think[0, 0, :, :] = torch.tensor(np.asarray(lab_orig[0,0,:,:]))
+    out_think[0, 1:, :, :] = torch.tensor(out[1:, :, :])
+    # out_tensor = util.im2tensor(out)
+    out_rgb = util.lab2rgb(out_think, opt)
+    out_im = util.tensor2im(out_rgb)
+
+    # print(out)
+
+    # out[:, :, 0]
+    # print(lab_orig.shape)
+
+    # print(out.shape)
 
 
-# def extract_lab_channels(data, opt):
-#     #  Convert to Lab, take ab, convert back to RGB
-#     full_lab_tensor = util.rgb2lab(data, opt)
-#     just_ab = torch.zeros_like(full_lab_tensor)
-#     just_ab[:, 1:, :, :] = full_lab_tensor[:, 1:, :, :]
-#     just_ab_asrgb = util.lab2rgb(just_ab, opt)
-#     return just_ab, just_ab_asrgb, full_lab_tensor
+    if vis:
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 5))
+        # fx_image = util.tensor2im(rgb_img)
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(labels_mx, cmap=cmap)
+        # ax2.imshow(centers2[:, :, 2:])
+        # ax2.imshow(labels_mx2)
+        # ax2.imshow(labels_mx2, cmap=cmap)
+        ax2.imshow(util.tensor2im(rgb_image_array_orig))
+        ax3.imshow(encoded_img[0])
+        ax4.imshow(encoded_coloured)
+        ax5.imshow(out_im)
+        plt.show()
+
+    return labels_mx
 
 
-# def apply_smoothing(just_ab_asrgb):
-#     # Kernel smoothing
-#     kernel = np.ones((5, 5), np.float32) / 25
-#     just_ab_asrgb_im = util.tensor2im(just_ab_asrgb)
-#     just_ab_asrgb_im_smoothed = np.asarray(cv.filter2D(just_ab_asrgb_im, -1, kernel)).astype(int)
-#     just_ab_smoothed_asab_tensor = util.im2tensor(just_ab_asrgb_im_smoothed)
-#     just_ab_smoothed_asab = util.rgb2lab(just_ab_smoothed_asab_tensor, opt)
-#     just_ab_smoothed_asab = just_ab_smoothed_asab[0, 1:, :, :]
-#
-#     return just_ab_smoothed_asab
+def extract_lab_channels(data, opt):
+    #  Convert to Lab, take ab, convert back to RGB
+    full_lab_tensor = util.rgb2lab(data, opt)
+    just_ab = torch.zeros_like(full_lab_tensor)
+    just_ab[:, 1:, :, :] = full_lab_tensor[:, 1:, :, :]
+    just_ab_asrgb = util.lab2rgb(just_ab, opt)
+    return just_ab, just_ab_asrgb, full_lab_tensor
+
+
+def apply_smoothing(just_ab_asrgb):
+    # Kernel smoothing
+    kernel = np.ones((5, 5), np.float32) / 25
+    just_ab_asrgb_im = util.tensor2im(just_ab_asrgb)
+    just_ab_asrgb_im_smoothed = np.asarray(cv.filter2D(just_ab_asrgb_im, -1, kernel)).astype(int)
+    just_ab_smoothed_asab_tensor = util.im2tensor(just_ab_asrgb_im_smoothed)
+    just_ab_smoothed_asab = util.rgb2lab(just_ab_smoothed_asab_tensor, opt)
+    just_ab_smoothed_asab = just_ab_smoothed_asab[0, 1:, :, :]
+
+    return just_ab_smoothed_asab
 
 
 def try_smoothing_just_lab():
@@ -779,21 +821,21 @@ if __name__ == '__main__':
         data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
         # plot_raw_data(data_raw[0])
-        print('Start', i)
-        just_ab, just_ab_asrgb, full_lab_tensor = util.extract_lab_channels(data_raw[0], opt)
+        # print('Start', i)
+        just_ab, just_ab_asrgb, full_lab_tensor = extract_lab_channels(data_raw[0], opt)
+        # print(just_ab_asrgb.shape)
+        just_ab_smoothed_asab = apply_smoothing(just_ab_asrgb)
 
-        just_ab_smoothed_asab = util.apply_smoothing(just_ab_asrgb, opt)
-
-        ab_bins, ab_bins_coloured = util.zhang_bins(just_ab_smoothed_asab, full_lab_tensor, opt, False)
+        ab_bins, ab_bins_coloured = zhang_bins(just_ab_smoothed_asab, full_lab_tensor, opt, False)
         # zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
         # zhang_bin_area_spiraler(ab_bins, rgb_image_array_orig, ab_bins_coloured)
-        labels_mx = util.dbscan_encoded_indexed(ab_bins, ab_bins_coloured, data_raw[0], False)
+        labels_mx = dbscan_encoded_indexed(ab_bins, ab_bins_coloured, data_raw[0], full_lab_tensor, True)
         h = 55
         w = 89
         bin = labels_mx[h, w]
         shared = len(labels_mx[labels_mx == bin])
         portion = shared/labels_mx.size
-        print('Stop', i)
+        # print('Stop', i)
 
 
 

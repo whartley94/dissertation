@@ -48,6 +48,8 @@ for i in flattened_list:
     expt_call = f"{base_call} "
     for j in range(len(i)):
         expt_call += f"--" + components[j] + f" {i[j]} "
+    if not i[1] == 0:
+        expt_call += f"--load_model"
     print(expt_call, file=output_file)
 #
 # for i in flattened_list:

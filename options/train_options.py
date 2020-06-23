@@ -33,5 +33,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--save_mpl', type=bool, default=True, help='Save png loss log during training')
         parser.add_argument('--auto_names', type=list, default=['slurm_id', 'gpu_ids', 'batch_size', 'num_threads', 'phase', 'load_sg_model'])
         parser.add_argument('--slurm_id', type=int, default=0)
+        parser.add_argument('--weighted_mask', action='store_true', help='Do my version of training with weighted masks')
         self.isTrain = True
         return parser
