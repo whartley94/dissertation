@@ -60,7 +60,7 @@
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=vectorjob
+MODEL_NAME=vectorjobtest 
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"
