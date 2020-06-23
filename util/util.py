@@ -4,6 +4,10 @@ import numpy as np
 from PIL import Image
 import os
 from collections import OrderedDict
+import cv2 as cv
+from sklearn.cluster import DBSCAN
+import sklearn
+import matplotlib
 from IPython import embed
 import matplotlib.pyplot as plt
 
@@ -352,6 +356,57 @@ def add_color_patches_rand_gt(data,opt,p=.125,num_points=None,use_avg=True,samp=
 
     return data
 
+def add_sized_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal'):
+# Add random color points sampled from ground truth based on:
+#   Number of points
+#   - if num_points is 0, then sample from geometric distribution, drawn from probability p
+#   - if num_points > 0, then sample that number of points
+#   Location of points
+#   - if samp is 'normal', draw from N(0.5, 0.25) of image
+#   - otherwise, draw from U[0, 1] of image
+    N,C,H,W = data['B'].shape
+
+    data['hint_B'] = torch.zeros_like(data['B'])
+    data['mask_B'] = torch.zeros_like(data['A'])
+
+    for nn in range(N):
+        pp = 0
+        cont_cond = True
+        while(cont_cond):
+            if(num_points is None): # draw from geometric
+                # embed()
+                cont_cond = np.random.rand() < (1-p)
+            else: # add certain number of points
+                cont_cond = pp < num_points
+            if(not cont_cond): # skip out of loop if condition not met
+                continue
+
+            P = np.random.choice(opt.sample_Ps) # patch size
+
+            # sample location
+            if(samp=='normal'): # geometric distribution
+                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+            else: # uniform distribution
+                h = np.random.randint(H-P+1)
+                w = np.random.randint(W-P+1)
+
+            # add color point
+            if(use_avg):
+                # embed()
+                data['hint_B'][nn,:,h:h+P,w:w+P] = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+            else:
+                data['hint_B'][nn,:,h:h+P,w:w+P] = data['B'][nn,:,h:h+P,w:w+P]
+
+            data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+
+            # increment counter
+            pp+=1
+
+    data['mask_B']-=opt.mask_cent
+
+    return data
+
 
 def add_color_patch(data, opt, P=1, hw=[128,128], ab=[0,0]):
     # Add a color patch at (h,w) with color (a,b)
@@ -428,7 +483,8 @@ def my_decode_ind_ab(data_q, opt):
     # data_a = data_q/opt.A
     # data_b = data_q - data_a*opt.A
     assert isinstance(opt.A, (int, float))
-    data_b = np.mod(data_q, opt.A)
+    # data_b = np.mod(data_q, opt.A)
+    data_b = torch.fmod(data_q, opt.A)
     data_a = (data_q-data_b)/opt.A
 
     data_ab = torch.cat((data_a, data_b), dim=1)
@@ -485,3 +541,145 @@ def calculate_psnr_torch(img1, img2):
     SE_map = (1.*img1-img2)**2
     cur_MSE = torch.mean(SE_map)
     return 20*torch.log10(1./torch.sqrt(cur_MSE))
+
+
+def extract_lab_channels(data, opt):
+    #  Convert to Lab, take ab, convert back to RGB
+    full_lab_tensor = rgb2lab(data, opt)
+    just_ab = torch.zeros_like(full_lab_tensor)
+    just_ab[:, 1:, :, :] = full_lab_tensor[:, 1:, :, :]
+    just_ab_asrgb = lab2rgb(just_ab, opt)
+    return just_ab, just_ab_asrgb, full_lab_tensor
+
+
+def apply_smoothing(just_ab_asrgb, opt):
+    # Kernel smoothing
+    kernel = np.ones((5, 5), np.float32) / 25
+    just_ab_asrgb_im = tensor2im(just_ab_asrgb)
+    just_ab_asrgb_im_smoothed = np.asarray(cv.filter2D(just_ab_asrgb_im, -1, kernel)).astype(int)
+    just_ab_smoothed_asab_tensor = im2tensor(just_ab_asrgb_im_smoothed)
+    just_ab_smoothed_asab = rgb2lab(just_ab_smoothed_asab_tensor, opt)
+    just_ab_smoothed_asab = just_ab_smoothed_asab[0, 1:, :, :]
+
+    return just_ab_smoothed_asab
+
+
+def zhang_bins(just_ab_smoothed_asab, l_tensor, opt, vis=True):
+    # print('Go')
+    n_clusterss = 25
+    psnrs = []
+    ks = []
+    times = []
+    just_ab_smoothed_asab = torch.reshape(just_ab_smoothed_asab, (1, 2, 250, 250))
+    encoded_ab = encode_ab_ind(just_ab_smoothed_asab, opt)
+    # encoded_ab = encoded_ab
+    # encoded_ab_flat = np.asarray(encoded_ab).reshape(250*250, 1)
+    encoded_img = encoded_ab.reshape(250, 250)
+    decoded_ab = my_decode_ind_ab(encoded_ab, opt)
+
+    center_lab = np.zeros((250, 250, 3))
+    center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    center_lab[:, :, 0] = l_tensor[0, 0, :, :]
+    center_lab_convert = im2tensor(center_lab, 'unknown')
+    center_lab_convert = lab2rgb(center_lab_convert, opt)
+    center_lab_img = tensor2im(center_lab_convert)
+
+    center_lab = np.zeros((250, 250, 3))
+    center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    # center_lab[:, :, 0] = l_tensor[0, 0, :, :]
+    center_lab_convert = im2tensor(center_lab, 'unknown')
+    center_lab_convert = lab2rgb(center_lab_convert, opt)
+    center_lab_img2 = tensor2im(center_lab_convert)
+
+    center_lab = np.zeros((250, 250, 3))
+    # center_lab[:, :, 1] = decoded_ab[0, 0, :, :]
+    # center_lab[:, :, 2] = decoded_ab[0, 1, :, :]
+    center_lab[:, :, :] = np.transpose(l_tensor[0], (1, 2, 0))
+    center_lab_convert = im2tensor(center_lab, 'unknown')
+    center_lab_convert = lab2rgb(center_lab_convert, opt)
+    center_lab_img3 = tensor2im(center_lab_convert)
+
+    if vis:
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
+        ax1.imshow(encoded_img)
+        ax2.imshow(center_lab_img2)
+        ax3.imshow(center_lab_img)
+        ax4.imshow(center_lab_img3)
+        ax1.set_title('Colour Bin Indexes')
+        ax2.set_title('Colour Bins Coloured')
+        ax3.set_title('Colour Bins with Original L')
+        ax4.set_title('Original Image')
+
+        plt.show()
+        plt.tight_layout()
+        # plt.savefig('bin_results/example_' + str(i) + '.png')
+        plt.close()
+
+    return encoded_ab, center_lab_img2
+
+
+def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, vis=True):
+    encoded_img = np.asarray(encoded[0, :, :, :])
+    encoded_flat = encoded_img.flatten()
+    # uniques = np.unique(encoded_flat)
+    # for unique in uniques:
+    #     rand = np.random.randint(-100, 100)
+    #     print(rand)
+    #     encoded_img[encoded_img==unique] += rand
+    # print(encoded_img)
+    indexes = np.mgrid[0:encoded_img.shape[1], 0:encoded_img.shape[2]]
+    # indexes = indexes/30
+    both = np.concatenate((encoded_img, indexes), axis=0)
+    both = np.transpose(both, (1, 2, 0))
+    both_flat = both.reshape(both.shape[0]* both.shape[1], both.shape[2])
+
+    # print('Scaler')
+    # scaler = StandardScaler()
+    both_scaled = sklearn.preprocessing.scale(both_flat, axis=0)
+    scale_rescale = 20
+    both_scaled[:, 1] = both_scaled[:, 1] * scale_rescale
+    both_scaled[:, 2] = both_scaled[:, 2] * scale_rescale
+    both_scaled[:, 0] = both_scaled[:, 0] * 6
+    # ab_X_indexed_flat = sklearn.preprocessing.scale(ab_X_indexed_flat, axis=0)
+    # ab_X_indexed_flat[:, 0:2]
+    # scaler.fit(ab_X)
+    # ab_X = scaler.transform(ab_X)
+    # print('Scaler Done')
+
+    # print('Starting')
+    eps = .5
+    min_samples = 5
+    means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # print('Done')
+    # centers = [means.core_sample_indices_[i] for i in means.labels_]
+    # centers = np.asarray(centers).astype(int)
+    labels_mx = means.labels_.reshape(both[:,:,0].shape)
+    # centers = centers.reshape(just_ab_image_array.shape)
+    #
+    # # print('Starting')
+    # eps = .5
+    # min_samples = 5
+    # means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
+    # # centers = [means2.cluster_centers_[i] for i in means2.labels_]
+    # # centers = np.asarray(centers).astype(int)
+    # labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
+    # # centers2 = centers.reshape(ab_X_indexed.shape)
+    # # print('Done')
+
+
+    if vis:
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 5))
+        # fx_image = util.tensor2im(rgb_img)
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(labels_mx, cmap=cmap)
+        # ax2.imshow(centers2[:, :, 2:])
+        # ax2.imshow(labels_mx2)
+        # ax2.imshow(labels_mx2, cmap=cmap)
+        ax2.imshow(tensor2im(rgb_image_array_orig))
+        ax3.imshow(encoded_img[0])
+        ax4.imshow(encoded_coloured)
+        plt.show()
+
+    return labels_mx
