@@ -169,8 +169,9 @@ def plot_loss_dict(loss_dictionary, name, vert_shift=0):
             total_time += np.float(line[' time'])
             times[i] = total_time
             losses[i] = line[' G_L1_reg']
-
-        plt.plot(times, losses+vert_shift, label=name)
+        N = 1200
+        losses = np.convolve(losses, np.ones((N,))/N, mode='valid')
+        plt.plot(times[N-1:], losses+vert_shift, label=name)
         # plt.title(name)
         # plt.show()
 
@@ -252,7 +253,7 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='950854')
+    slurm_dirs = get_logs(slurm_exp='952575')
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.
     time_epoch_pre = get_epoch_times_variable_length(slurm_dirs)
@@ -289,13 +290,13 @@ if __name__ == '__main__':
     # loss_vs_gpu_plot()
 
     # Plot The Loss Graph For A Given Out File list of Dictionaries.
-    # plot_high_gpu_loss_graphs()
+    plot_high_gpu_loss_graphs()
 
     # Plot graph for batch size vs time taken.
     # plot_batch_size_vs_time_taken()
 
     # 3D Plot graph for batch & GPUs vs time taken.
-    plot_batch_gpu_time_taken()
+    # plot_batch_gpu_time_taken()
 
     # 3D Pot for batch & GPUs vs loss
     # plot_batch_gpu_loss()
