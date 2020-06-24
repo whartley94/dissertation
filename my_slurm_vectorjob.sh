@@ -118,6 +118,7 @@ echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 # input data directory path on the DFS
 src_path=/home/${USER}/datasets/SUN2012/Images
+caffe_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints/siggraph_caffemodel
 model_src=/home/${USER}/git/dissertation/checkpoints/${MODEL_NAME}
 mkdir -p ${model_src}  # make it if required
 
@@ -142,7 +143,10 @@ echo "Rsync Completed"
 
 cpoint_path=${SCRATCH_HOME}/checkpoints/${MODEL_NAME}
 mkdir -p ${cpoint_path}  # make it if required
+caffe_path=${SCRATCH_HOME}/checkpoints/siggraph_caffemodel
+mkdir -p ${caffe_path}  # make it if required
 rsync --archive --update --compress --progress ${model_src}/ ${cpoint_path}
+rsync --archive --update --compress --progress ${caffe_src}/ ${caffe_path}
 
 
 echo "Forming Symlink Datafiles:"
