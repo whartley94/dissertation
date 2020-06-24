@@ -5,6 +5,7 @@ from models import create_model
 from util import html
 from PIL import Image
 import matplotlib.pyplot as plt
+from skimage import measure
 import matplotlib
 import copy
 import time
@@ -255,7 +256,7 @@ def zhang_bins(just_ab_smoothed_asab, l_tensor, i, vis=True):
         # plt.savefig('bin_results/example_' + str(i) + '.png')
         plt.close()
 
-    return encoded_ab, center_lab_img2
+    return encoded_ab, center_lab_img2, center_lab_img
 
 
 def cluster_ab_indexed(ab_X, ab_X_indexed_flat, ab_X_indexed, just_ab_image_array):
@@ -639,6 +640,42 @@ def points_in_circle_np(radius, x0=0, y0=0, ):
     for x, y in zip(x_[x], y_[y]):
         yield x, y
 
+def my_averagge_cluster_dbscan(lab_orig, means):
+    lab_orig_flat = np.asarray(lab_orig[0])
+    lab_orig_flat = lab_orig_flat.reshape(3, 250*250)
+    lab_orig_flat = np.transpose(lab_orig_flat, (1, 0))
+    # lab_orig_flat = np.asarray(lab_orig[0].reshape(250*250, 3))
+    n_clusters_ = len(set(means.labels_))
+    clusters = [lab_orig_flat[means.labels_ == m] for m in range(n_clusters_)]
+    cluster_means = [np.mean(cluster, axis=0) for cluster in clusters]
+    # print(means.labels_)
+    cluster_means = np.asarray(cluster_means)
+    # print(len(cluster_means))
+    # print(n_clusters_)
+    flat_out = [cluster_means[ind+1] for ind in means.labels_]
+    # print(flat_out)
+    # print(flat_out)
+    # print('Flat', flat_out)
+
+    flat_out = np.asarray(flat_out)
+    # print(flat_out.shape)
+    out = flat_out.reshape(250, 250, 3)
+    out = np.transpose(out, (2, 0, 1))
+    # print(out.shape)
+    # print(lab_orig.shape)
+    # out[:, :, 0] = np.asarray(lab_orig[0,0,:,:])
+    # out[:, :, 1] = np.asarray(lab_orig[0,1,:,:])
+    # out[:, :, 2] = np.asarray(lab_orig[0,2,:,:])
+    # out[:, :, 1:] = 0
+    # out = lab_orig
+    out_think = torch.zeros_like(lab_orig)
+    out_think[0, 0, :, :] = torch.tensor(np.asarray(lab_orig[0,0,:,:]))
+    out_think[0, 1:, :, :] = torch.tensor(out[1:, :, :])
+    # out_tensor = util.im2tensor(out)
+    out_rgb = util.lab2rgb(out_think, opt)
+    out_im = util.tensor2im(out_rgb)
+    return out_im
+
 
 def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, lab_orig, vis=True):
     encoded_img = np.asarray(encoded[0, :, :, :])
@@ -676,57 +713,8 @@ def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, lab_
     # centers = [means.core_sample_indices_[i] for i in means.labels_]
     # centers = np.asarray(centers).astype(int)
     labels_mx = means.labels_.reshape(both[:,:,0].shape)
-    # centers = centers.reshape(just_ab_image_array.shape)
-    #
-    # # print('Starting')
-    # eps = .5
-    # min_samples = 5
-    # means2 = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
-    # # centers = [means2.cluster_centers_[i] for i in means2.labels_]
-    # # centers = np.asarray(centers).astype(int)
-    # labels_mx2 = means2.labels_.reshape(both[:, :, 0].shape)
-    # # centers2 = centers.reshape(ab_X_indexed.shape)
-    # # print('Done')
-    lab_orig_flat = np.asarray(lab_orig[0])
-    lab_orig_flat = lab_orig_flat.reshape(3, 250*250)
-    lab_orig_flat = np.transpose(lab_orig_flat, (1, 0))
-    # lab_orig_flat = np.asarray(lab_orig[0].reshape(250*250, 3))
-    n_clusters_ = len(set(means.labels_))
-    clusters = [lab_orig_flat[means.labels_ == m] for m in range(n_clusters_)]
-    cluster_means = [np.mean(cluster, axis=0) for cluster in clusters]
-    # print(means.labels_)
-    cluster_means = np.asarray(cluster_means)
-    print(len(cluster_means))
-    print(n_clusters_)
-    flat_out = [cluster_means[ind+1] for ind in means.labels_]
-    print(flat_out)
-    # print(flat_out)
-    # print('Flat', flat_out)
 
-    flat_out = np.asarray(flat_out)
-    print(flat_out.shape)
-    out = flat_out.reshape(250, 250, 3)
-    out = np.transpose(out, (2, 0, 1))
-    print(out.shape)
-    print(lab_orig.shape)
-    # out[:, :, 0] = np.asarray(lab_orig[0,0,:,:])
-    # out[:, :, 1] = np.asarray(lab_orig[0,1,:,:])
-    # out[:, :, 2] = np.asarray(lab_orig[0,2,:,:])
-    # out[:, :, 1:] = 0
-    # out = lab_orig
-    out_think = torch.zeros_like(lab_orig)
-    out_think[0, 0, :, :] = torch.tensor(np.asarray(lab_orig[0,0,:,:]))
-    out_think[0, 1:, :, :] = torch.tensor(out[1:, :, :])
-    # out_tensor = util.im2tensor(out)
-    out_rgb = util.lab2rgb(out_think, opt)
-    out_im = util.tensor2im(out_rgb)
-
-    # print(out)
-
-    # out[:, :, 0]
-    # print(lab_orig.shape)
-
-    # print(out.shape)
+    out_im = my_averagge_cluster_dbscan(lab_orig, means)
 
 
     if vis:
@@ -745,6 +733,113 @@ def dbscan_encoded_indexed(encoded, encoded_coloured, rgb_image_array_orig, lab_
 
     return labels_mx
 
+
+def bins_scimage_group(encoded, encoded_coloured, rgb_image_array_orig, lab_orig, concat_lab_bins, vis=True):
+    encoded_np = np.asarray(encoded[0, 0, :, :]).astype(int)
+    img_labeled, n_labeled = measure.label(encoded_np, connectivity=1, return_num=True)
+    t = [len(np.unique(encoded_coloured[img_labeled==i], axis=0)) for i in range(1, n_labeled)]
+    # t = [encoded_coloured[img_labeled==i] for i in range(n_labeled)]
+    # print(np.unique(t))
+    a = np.asarray(lab_orig[0, 1, :, :])
+    b = np.asarray(lab_orig[0, 2, :, :])
+    avga = [np.mean(a[img_labeled == label]) for label in range(1, n_labeled)]
+    avga = np.asarray(avga)
+    avgb = [np.mean(b[img_labeled == label]) for label in range(1, n_labeled)]
+
+    flat_labels = img_labeled.flatten()
+
+    avg_flat_a = [avga[(ix-2)] for ix in flat_labels]
+    avg_flat_a = np.asarray(avg_flat_a)
+    avg_flat_b = [avgb[(ix-2)] for ix in flat_labels]
+    avg_flat_b = np.asarray(avg_flat_b)
+
+    avg_a = avg_flat_a.reshape(250,250)
+    avg_b = avg_flat_b.reshape(250,250)
+
+    img = torch.zeros_like(lab_orig)
+    img[0, 0, :, :] = lab_orig[0, 0, :, :]
+    img[0, 1, :, :] = torch.tensor(avg_a)
+    img[0, 2, :, :] = torch.tensor(avg_b)
+    rgb_img = util.lab2rgb(img, opt)
+    rgb_img = util.tensor2im(rgb_img)
+
+
+    if vis:
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 5))
+        # fx_image = util.tensor2im(rgb_img)
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(img_labeled, cmap=cmap)
+        # ax2.imshow(centers2[:, :, 2:])
+        # ax2.imshow(labels_mx2)
+        # ax2.imshow(labels_mx2, cmap=cmap)
+        ax2.imshow(util.tensor2im(rgb_image_array_orig))
+        ax3.imshow(concat_lab_bins)
+        ax4.imshow(rgb_img)
+        ax5.imshow(encoded_coloured)
+        # ax5.imshow(out_im)
+        ax1.set_title('Clustered')
+        ax2.set_title('Original Image')
+        ax3.set_title('Concatenate Binned ab Colours')
+        ax4.set_title('Concatenate Cluster Average ab')
+        ax5.set_title('Binned Colours')
+        plt.tight_layout()
+        plt.show()
+
+
+def ab_scimage_group(encoded, encoded_coloured, rgb_image_array_orig, lab_orig, concat_lab_bins, vis=True):
+    np_ab = np.asarray(lab_orig[0, 1:, :, :])
+    # lab_orig[0, 1:, :, :]
+    A = 2 * opt.ab_max
+    data_q = np_ab[0,:,:]*A + np_ab[1,:,:]
+    img_labeled, n_labeled = measure.label(data_q, connectivity=2, return_num=True)
+    print(img_labeled.shape)
+    # t = [len(np.unique(encoded_coloured[img_labeled==i], axis=0)) for i in range(1, n_labeled)]
+    # # t = [encoded_coloured[img_labeled==i] for i in range(n_labeled)]
+    # # print(np.unique(t))
+    # a = np.asarray(lab_orig[0, 1, :, :])
+    # b = np.asarray(lab_orig[0, 2, :, :])
+    # avga = [np.mean(a[img_labeled == label]) for label in range(1, n_labeled)]
+    # avga = np.asarray(avga)
+    # avgb = [np.mean(b[img_labeled == label]) for label in range(1, n_labeled)]
+    #
+    # flat_labels = img_labeled.flatten()
+    #
+    # avg_flat_a = [avga[(ix-2)] for ix in flat_labels]
+    # avg_flat_a = np.asarray(avg_flat_a)
+    # avg_flat_b = [avgb[(ix-2)] for ix in flat_labels]
+    # avg_flat_b = np.asarray(avg_flat_b)
+    #
+    # avg_a = avg_flat_a.reshape(250,250)
+    # avg_b = avg_flat_b.reshape(250,250)
+    #
+    # img = torch.zeros_like(lab_orig)
+    # img[0, 0, :, :] = lab_orig[0, 0, :, :]
+    # img[0, 1, :, :] = torch.tensor(avg_a)
+    # img[0, 2, :, :] = torch.tensor(avg_b)
+    # rgb_img = util.lab2rgb(img, opt)
+    # rgb_img = util.tensor2im(rgb_img)
+
+
+    if vis:
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 5))
+        # fx_image = util.tensor2im(rgb_img)
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(img_labeled, cmap=cmap)
+        # ax2.imshow(centers2[:, :, 2:])
+        # ax2.imshow(labels_mx2)
+        # ax2.imshow(labels_mx2, cmap=cmap)
+        ax2.imshow(util.tensor2im(rgb_image_array_orig))
+        ax3.imshow(concat_lab_bins)
+        # ax4.imshow(rgb_img)
+        ax5.imshow(encoded_coloured)
+        # ax5.imshow(out_im)
+        ax1.set_title('Clustered')
+        ax2.set_title('Original Image')
+        ax3.set_title('Concatenate Binned ab Colours')
+        ax4.set_title('Concatenate Cluster Average ab')
+        ax5.set_title('Binned Colours')
+        plt.tight_layout()
+        plt.show()
 
 def extract_lab_channels(data, opt):
     #  Convert to Lab, take ab, convert back to RGB
@@ -826,15 +921,21 @@ if __name__ == '__main__':
         # print(just_ab_asrgb.shape)
         just_ab_smoothed_asab = apply_smoothing(just_ab_asrgb)
 
-        ab_bins, ab_bins_coloured = zhang_bins(just_ab_smoothed_asab, full_lab_tensor, opt, False)
+        ab_bins, ab_bins_coloured, concat_lab_bins = zhang_bins(just_ab_smoothed_asab, full_lab_tensor, opt, False)
         # zhang_bin_box_finder(ab_bins, rgb_image_array_orig, ab_bins_coloured)
         # zhang_bin_area_spiraler(ab_bins, rgb_image_array_orig, ab_bins_coloured)
-        labels_mx = dbscan_encoded_indexed(ab_bins, ab_bins_coloured, data_raw[0], full_lab_tensor, True)
-        h = 55
-        w = 89
-        bin = labels_mx[h, w]
-        shared = len(labels_mx[labels_mx == bin])
-        portion = shared/labels_mx.size
+
+        # labels_mx = dbscan_encoded_indexed(ab_bins, ab_bins_coloured, data_raw[0], full_lab_tensor, True)
+        labels_mx_2 = bins_scimage_group(ab_bins, ab_bins_coloured, data_raw[0], full_lab_tensor, concat_lab_bins)
+        # labels_mx_3 = ab_scimage_group(ab_bins, ab_bins_coloured, data_raw[0], full_lab_tensor, concat_lab_bins)
+
+
+
+        # h = 55
+        # w = 89
+        # bin = labels_mx[h, w]
+        # shared = len(labels_mx[labels_mx == bin])
+        # portion = shared/labels_mx.size
         # print('Stop', i)
 
 

@@ -7,6 +7,7 @@ from collections import OrderedDict
 import cv2 as cv
 from sklearn.cluster import DBSCAN
 import sklearn
+from skimage import measure
 import matplotlib
 from IPython import embed
 import matplotlib.pyplot as plt
@@ -390,12 +391,14 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
     for nn in range(N):
         # print('Extracting', nn/N)
-        if opt.weighted_mask:
-            # print(data['abRgb'][nn, :, :, :].shape)
-            just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
-            ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
-            labels = dbscan_encoded_indexed(ab_bins)
+
+        # print(data['abRgb'][nn, :, :, :].shape)
+        just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
+        ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
+        # labels = dbscan_encoded_indexed(ab_bins)
+        labels = bins_scimage_group_minimal(ab_bins)
         # print('Extracted', nn/N)
+
 
         pp = 0
         cont_cond = True
@@ -408,8 +411,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             if(not cont_cond): # skip out of loop if condition not met
                 continue
 
-            # P = np.random.choice(opt.sample_Ps) # patch size
-            P = 1
+            P = np.random.choice(opt.sample_Ps) # patch size
+            # P = 1
 
             # sample location
             if(samp=='normal'): # geometric distribution
@@ -422,24 +425,35 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             # add color point
             if(use_avg):
                 # embed()
-                data['hint_B'][nn,:,h:h+P,w:w+P] = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+                hint = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+                bin_colour = torch.mean(torch.mean(ab_decoded[0, :, h:h + P, w:w + P], dim=2, keepdim=True), dim=1,
+                                        keepdim=True).view(1, C, 1, 1)
             else:
-                data['hint_B'][nn,:,h:h+P,w:w+P] = data['B'][nn,:,h:h+P,w:w+P]
-            print('a', data['hint_B'][nn,:,h:h+P,w:w+P])
-            print('b', ab_decoded[0, :, h:h+P, w:w+P])
-            bin_value = int(labels[h, w])
-            dat = data['B'][nn, :, :, :]
+                hint = data['B'][nn,:,h:h+P,w:w+P]
+                bin_colour = ab_decoded[0, :, h:h + P, w:w + P]
 
-            dat2 = labels
+            unique_bins = np.unique(labels[h:h+P, w:w+P])
+            # print(unique_bins)
+            if len(unique_bins) == 1:
+                num_same_bin = len(labels[labels==unique_bins[0]])
+                weight1 = num_same_bin/(opt.fineSize**2)
 
-            meana = torch.mean(dat[0, :, :][dat2==bin_value])
-            meanb = torch.mean(dat[1, :, :][dat2==bin_value])
-            print('c',meana,meanb)
 
-            data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+                # data['hint_B'][nn,:,h:h+P,w:w+P] = hint
+                data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+                # bin_colour
+                # print('a', hint)
 
-            # increment counter
-            pp+=1
+                # print('b', bin_colour)
+
+
+                # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+                center_h = int(h + (P/2))
+                center_w = int(w + (W/2))
+                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+
+                # increment counter
+                pp+=1
 
     data['mask_B']-=opt.mask_cent
     return data
@@ -627,3 +641,10 @@ def dbscan_encoded_indexed(encoded):
     means = DBSCAN(eps=eps, min_samples=min_samples).fit(both_scaled)
     labels_mx = means.labels_.reshape(both[:,:,0].shape)
     return labels_mx
+
+
+def bins_scimage_group_minimal(encoded):
+    encoded_np = np.asarray(encoded[0, 0, :, :]).astype(int)
+    img_labeled = measure.label(encoded_np, connectivity=1)
+    return img_labeled
+
