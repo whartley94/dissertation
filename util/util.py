@@ -319,7 +319,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
             return None
 
     if opt.weighted_mask:
-        return add_weighted_colour_patches(data, opt, p=p, num_points=num_points)
+        return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     else:
         return add_color_patches_rand_gt(data, opt, p=p, num_points=num_points)
 
@@ -439,19 +439,15 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 weight1 = float(num_same_bin/(opt.fineSize**2))
                 # print(weight1)
 
-
-                data['hint_B'][nn,:,h:h+P,w:w+P] = hint
+                center_h = int(h + (P/2))
+                center_w = int(w + (P/2))
+                print(hint)
+                data['hint_B'][nn,:,center_h,center_w] = hint[0][0]
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
-                # bin_colour
-                # print('a', hint)
-
-                # print('b', bin_colour)
-
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-                # center_h = int(h + (P/2))
-                # center_w = int(w + (P/2))
-                data['mask_B'][nn,:,h:h+P,w:w+P] = weight1 + opt.mask_cent
+
+                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
 
                 # increment counter
                 pp+=1
