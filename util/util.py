@@ -441,7 +441,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
                 center_h = int(h + (P/2))
                 center_w = int(w + (P/2))
-                print(hint)
+                # print(hint)
                 data['hint_B'][nn,:,center_h,center_w] = hint[0][0]
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
