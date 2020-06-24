@@ -436,11 +436,12 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             # print(unique_bins)
             if len(unique_bins) == 1:
                 num_same_bin = len(labels[labels==unique_bins[0]])
-                weight1 = num_same_bin/(opt.fineSize**2)
+                weight1 = float(num_same_bin/(opt.fineSize**2))
+                # print(weight1)
 
 
-                # data['hint_B'][nn,:,h:h+P,w:w+P] = hint
-                data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+                data['hint_B'][nn,:,h:h+P,w:w+P] = hint
+                # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
                 # bin_colour
                 # print('a', hint)
 
@@ -448,9 +449,9 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-                center_h = int(h + (P/2))
-                center_w = int(w + (W/2))
-                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                # center_h = int(h + (P/2))
+                # center_w = int(w + (P/2))
+                data['mask_B'][nn,:,h:h+P,w:w+P] = weight1 + opt.mask_cent
 
                 # increment counter
                 pp+=1
@@ -648,3 +649,36 @@ def bins_scimage_group_minimal(encoded):
     img_labeled = measure.label(encoded_np, connectivity=1)
     return img_labeled
 
+def plot_data(data, opt):
+    for nn in range(data['B'].shape[0]):
+        # print(data.keys())
+        lab_ims = lab2rgb(data['lab'][:, :, :, :], opt)
+        lab_im = tensor2im(lab_ims[nn])
+        rgb_im = tensor2im(data['abRgb'][nn, :, :, :])
+        mask = data['mask_B'][nn, 0, :, :]
+        mask_im = np.asarray(mask)
+        # mask_im = np.transpose(mask_im, (1, 2, 0))
+        hint = data['hint_B'][nn, :, :, :]
+        hint_lab = torch.zeros(1, 3, mask_im.shape[0], mask_im.shape[1])
+        hint_lab[0, 0, :, :] = 0.3
+        hint_lab[0, 1, :, :]  = hint[0, :, :]
+        hint_lab[0, 2, :, :]  = hint[1, :, :]
+        hint_rgb = lab2rgb(hint_lab, opt)
+        hint_im = tensor2im(hint_rgb)
+        hint_im[mask_im==-0.5] = 0
+
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 3.5))
+        # fx_image = util.tensor2im(rgb_img)
+        # cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(lab_im)
+        ax2.imshow(rgb_im)
+        im3 = ax3.imshow(mask_im, vmin=-0.5, vmax =1)
+        fig.colorbar(im3, ax=ax3)
+        ax4.imshow(hint_im)
+        # ax5.imshow(out_im)
+        ax1.set_title('Original')
+        ax2.set_title('ab Channels')
+        ax3.set_title('Weighted Mask')
+        ax4.set_title('Colour Hints')
+        plt.tight_layout()
+        plt.show()
