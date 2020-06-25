@@ -13,7 +13,7 @@ cpoint_path = f'{SCRATCH_HOME}/checkpoints'
 
 # base_call = f"python3 train.py -i {DATA_HOME}/input -o {DATA_HOME}/output"
 
-base_call = f"python train.py --sample_p .125 --niter_decay 0 --display_id -1 " \
+base_call = f"python train.py --sample_p .1 --niter_decay 0 --display_id -1 " \
     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train " \
     f"--batch_size 60 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.000001 --weighted_mask"
 # base_call2 = f"python train.py --name Auto --sample_p .125 --niter 20 --niter_decay 0 --lr 0.000001 --display_id -1 " \
