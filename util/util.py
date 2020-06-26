@@ -70,7 +70,44 @@ def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
     return real_im
 
 
+def draw_bbox(mx, bbox, col, nn):
+    h1 = bbox[0]-1
+    w1 = bbox[1]-1
+    h2 = bbox[2]-1
+    w2 = bbox[3]-1
 
+    # print(h1, h2, w1, w2)
+    # print(col)
+    assert w2>w1
+    assert h2>h1
+
+    for runr in range(w1, w2, 1):
+        mx[nn, 0, h1, runr] = col[0]
+        mx[nn, 1, h1, runr] = col[1]
+        mx[nn, 0, h2, runr] = col[0]
+        mx[nn, 1, h2, runr] = col[1]
+    for runr in range(h1, h2, 1):
+        mx[nn, 0, runr, w1] = col[0]
+        mx[nn, 0, runr, w2] = col[0]
+        mx[nn, 1, runr, w1] = col[1]
+        mx[nn, 1, runr, w2] = col[1]
+    return mx
+
+def draw_bbox_1d(mx, bbox, col, nn):
+    h1 = bbox[0]-1
+    w1 = bbox[1]-1
+    h2 = bbox[2]-1
+    w2 = bbox[3]-1
+    # print(h1, h2, w1, w2)
+    # print(col)
+
+    for i in range(w1, w2, 1):
+        mx[nn, 0, h1, i] = col
+        mx[nn, 0, h2, i] = col
+    for j in range(h1, h2, 1):
+        mx[nn, 0, j, w1] = col
+        mx[nn, 0, j, w2] = col
+    return mx
 
 def draw_fill_square(real_im, hb, wb, P, col, boarder=''):
     col = col*255
@@ -298,7 +335,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
     data_lab = rgb2lab(data_raw[0], opt)
     data['A'] = data_lab[:,[0,],:,:]
     data['B'] = data_lab[:,1:,:,:]
-    if opt.weighted_mask:
+    if opt.weighted_mask or opt.bb_mask:
         data['lab'] = data_lab
         just_ab = torch.zeros_like(data_lab)
         just_ab[:, 1:, :, :] = data_lab[:, 1:, :, :]
@@ -311,7 +348,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
         mask = torch.sum(torch.abs(torch.max(torch.max(data['B'],dim=3)[0],dim=2)[0]-torch.min(torch.min(data['B'],dim=3)[0],dim=2)[0]),dim=1) >= thresh
         data['A'] = data['A'][mask,:,:,:]
         data['B'] = data['B'][mask,:,:,:]
-        if opt.weighted_mask:
+        if opt.weighted_mask or opt.bb_mask:
             data['abRgb'] = data['abRgb'][mask,:,:,:]
             data['lab'] = data['lab'][mask,:,:,:]
         # print('Removed %i points'%torch.sum(mask==0).numpy())
@@ -320,6 +357,8 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
 
     if opt.weighted_mask:
         return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
+    elif opt.bb_mask:
+        return add_bb_colour_patches(data, opt, p=p, num_points=num_points)
     else:
         return add_color_patches_rand_gt(data, opt, p=p, num_points=num_points)
 
@@ -442,12 +481,110 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 center_h = int(h + (P/2))
                 center_w = int(w + (P/2))
                 # print(hint)
-                data['hint_B'][nn,:,center_h,center_w] = hint[0][0]
+                data['hint_B'][nn, 0, center_h, center_w] = hint[0][0]
+                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
 
                 data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+
+                # increment counter
+                pp+=1
+
+    data['mask_B']-=opt.mask_cent
+    return data
+
+
+def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal'):
+# Add random color points sampled from ground truth based on:
+#   Number of points
+#   - if num_points is 0, then sample from geometric distribution, drawn from probability p
+#   - if num_points > 0, then sample that number of points
+#   Location of points
+#   - if samp is 'normal', draw from N(0.5, 0.25) of image
+#   - otherwise, draw from U[0, 1] of image
+#     print('Adding Weighted Colour Patches')
+    N,C,H,W = data['B'].shape
+
+    data['hint_B'] = torch.zeros_like(data['B'])
+    data['mask_B'] = torch.zeros_like(data['A'])
+
+    for nn in range(N):
+        # print('Extracting', nn/N)
+
+        # print(data['abRgb'][nn, :, :, :].shape)
+        just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
+        ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
+        # labels = dbscan_encoded_indexed(ab_bins)
+        labels, num_labels = bins_scimage_group_minimal(ab_bins)
+        region_prop = measure.regionprops(labels)
+
+        # print(region_prop[0].bbox)
+        # print('Extracted', nn/N)
+
+
+        pp = 0
+        cont_cond = True
+        while(cont_cond):
+            if(num_points is None): # draw from geometric
+                # embed()
+                cont_cond = np.random.rand() < (1-p)
+            else: # add certain number of points
+                cont_cond = pp < num_points
+            if(not cont_cond): # skip out of loop if condition not met
+                continue
+
+            P = np.random.choice(opt.sample_Ps) # patch size
+            # P = 1
+
+            # sample location
+            if(samp=='normal'): # geometric distribution
+                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+            else: # uniform distribution
+                h = np.random.randint(H-P+1)
+                w = np.random.randint(W-P+1)
+
+
+
+            # add color point
+            if(use_avg):
+                # embed()
+                hint = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+                bin_colour = torch.mean(torch.mean(ab_decoded[0, :, h:h + P, w:w + P], dim=2, keepdim=True), dim=1,
+                                        keepdim=True).view(1, C, 1, 1)
+            else:
+                hint = data['B'][nn,:,h:h+P,w:w+P]
+                bin_colour = ab_decoded[0, :, h:h + P, w:w + P]
+
+            unique_bins = np.unique(labels[h:h+P, w:w+P])
+            # print(unique_bins)
+            if len(unique_bins) == 1:
+                num_same_bin = len(labels[labels==unique_bins[0]])
+                weight1 = float(num_same_bin/(opt.fineSize**2))
+                # print(weight1)
+
+                center_h = int(h + (P/2))
+                center_w = int(w + (P/2))
+
+                label = labels[center_h, center_w]
+                bbox = region_prop[label-1].bbox
+                # print(bbox)
+                # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
+                data['hint_B'] = draw_bbox(data['hint_B'], bbox, hint[0], nn)
+
+
+                data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
+                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+                # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+
+                # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+
+                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                col = weight1 + opt.mask_cent
+
+                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn)
 
                 # increment counter
                 pp+=1
@@ -642,8 +779,8 @@ def dbscan_encoded_indexed(encoded):
 
 def bins_scimage_group_minimal(encoded):
     encoded_np = np.asarray(encoded[0, 0, :, :]).astype(int)
-    img_labeled = measure.label(encoded_np, connectivity=1)
-    return img_labeled
+    img_labeled, num_labels = measure.label(encoded_np, connectivity=1, return_num=True)
+    return img_labeled, num_labels
 
 def plot_data(data, opt):
     for nn in range(data['B'].shape[0]):
