@@ -124,6 +124,8 @@ model_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints
 dest_path=${SCRATCH_HOME}/datasets/SUN2012/Images
 mkdir -p ${dest_path}  # make it if required
 
+cp /home/${USER}/git/dissertation/experiments.txt /home/${USER}/slurm_logs/${SLURM_JOB_ID}_experiments.txt
+
 # Important notes about rsync:
 # * the --compress option is going to compress the data before transfer to send
 #   as a stream. THIS IS IMPORTANT - transferring many files is very very slow
