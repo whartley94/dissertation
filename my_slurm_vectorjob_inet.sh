@@ -152,11 +152,10 @@ mkdir -p ${caffe_path}  # make it if required
 rsync --archive --update --compress --progress ${model_src}/ ${cpoint_path}
 rsync --archive --update --compress --progress ${caffe_src}/ ${caffe_path}
 
-coden="${dest_path}/"
-code="${coden}/"
+code="${dest_path}/"
 for f in ${code}*.tar; do
   d=`basename "$f" .tar`
-  dpath="${code}$d"
+  dpath="${code}TrainFolders/$d"
   echo "${dpath}"
   mkdir -p "${dpath}"
   tar --keep-newer-files -xf "$f" -C "${dpath}"
@@ -166,7 +165,7 @@ echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset
 echo "OG Dataset Dir: ${dest_path}"
 echo "Sorted Dataset Dir: ${sorted_path}"
-python make_sun12_dataset.py --in_path ${dest_path} --out_path ${sorted_path}
+python make_ilsvrc_dataset_set.py --in_path ${dest_path} --out_path ${sorted_path}
 
 
 # ==============================
