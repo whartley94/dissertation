@@ -165,7 +165,7 @@ echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset
 echo "OG Dataset Dir: ${dest_path}"
 echo "Sorted Dataset Dir: ${sorted_path}"
-python make_ilsvrc_dataset_set.py --in_path ${dest_path} --out_path ${sorted_path}
+python make_ilsvrc_dataset_set.py --in_path ${dest_path} --out_path ${sorted_path} --partition ${COMMAND}
 
 
 # ==============================
