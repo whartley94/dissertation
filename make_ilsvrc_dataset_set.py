@@ -33,10 +33,12 @@ print('Making small training set in...[%s]'%trn_small_path)
 
 # Copy over whole training set
 trn_path = os.path.join(opt.out_path, 'train')
-if not os.path.isdir(trn_small_path):
-	util.mkdirs(opt.out_path)
-	os.symlink(os.path.join(opt.in_path,train_loc),trn_path)
-	print('Making training set in...[%s]'%trn_path)
+if os.path.isdir(trn_path):
+	os.unlink(trn_path)
+util.mkdirs(opt.out_path)
+os.symlink(os.path.join(opt.in_path,train_loc),trn_path)
+print('Making training set in...[%s]'%trn_path)
+
 
 # Copy over training partition
 trn_partition_path = os.path.join(opt.out_path, 'train_partition')
