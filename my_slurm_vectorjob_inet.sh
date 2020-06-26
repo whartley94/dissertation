@@ -122,7 +122,8 @@ caffe_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints/siggraph_
 model_src=/home/${USER}/git/dissertation/checkpoints/${MODEL_NAME}
 mkdir -p ${model_src}  # make it if required
 
-
+cp /home/${USER}/git/dissertation/portions_vec.txt /home/${USER}/slurm_logs/${SLURM_JOB_ID}_portions_vec.txt
+cp /home/${USER}/git/dissertation/experiments_vec.txt /home/${USER}/slurm_logs/${SLURM_JOB_ID}_experiments_vec.txt
 
 # input data directory path on the scratch disk of the node
 dest_path=${SCRATCH_HOME}/datasets/INetData/FromHome
