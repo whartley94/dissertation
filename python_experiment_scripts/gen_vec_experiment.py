@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Script for generating experiments.txt"""
 import os
+import numpy as np
 import itertools
 
 # The home dir on the node's scratch disk
@@ -31,10 +32,19 @@ base_call = f"python train.py --sample_p .1 --niter_decay 0 --display_id -1 " \
 # weight_decays = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
 
 components = ['niter', 'epoch_count']
-niters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-epoch_counts = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# niters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+#           12, 13, 14, 15, 16, 17, 18, 19, 20,
+#           21, 22, 23, 24, 25, 26, 27, 28, 29,
+#           38, 47]
+niters = np.arange(1, 56, 1)
+# epoch_counts = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+epoch_counts = np.arange(0, 55, 1)
 flattened_list  = list(zip(niters, epoch_counts))
-portion_vec = ['n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1']
+portion_vec = ['n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
+               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
+               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
+               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
+               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1']
 assert len(flattened_list) == len(portion_vec)
 # print(flattened_list)
 # batch_sizes = [32, 64, 98, 128]
