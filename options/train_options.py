@@ -35,5 +35,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--slurm_id', type=int, default=0)
         parser.add_argument('--weighted_mask', action='store_true', help='Do my version of training with weighted masks')
         parser.add_argument('--bb_mask', action='store_true', help='Do my version of training with bounding box masks')
+        parser.add_argument('--plot_data_gen', action='store_true', help='Plot data as its generated')
         self.isTrain = True
         return parser

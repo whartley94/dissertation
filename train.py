@@ -98,7 +98,8 @@ if __name__ == '__main__':
             if len(opt.gpu_ids) > 0:
                 data_raw[0] = data_raw[0].cuda()
             data = util.get_colorization_data(data_raw, opt, p=opt.sample_p)
-            util.plot_data(data, opt)
+            if opt.plot_data_gen:
+                util.plot_data(data, opt)
             if(data is None):
                 continue
 
