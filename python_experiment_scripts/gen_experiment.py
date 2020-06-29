@@ -26,7 +26,7 @@ base_call = f"python train.py --name Auto --sample_p 1.0 --niter 50 --niter_deca
 # weight_decays = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
 
 components = ['batch_size']
-batch_sizes = [140, 152, 164, 178, 190]
+batch_sizes = [142, 144, 146, 148, 150]
 # gpu_idss = ['0', '0,1', '0,1,2,3', '0,1,2,3,4,5,6,7']
 # num_threads = [0, 4]
 # phases = ['train_small', 'train']
