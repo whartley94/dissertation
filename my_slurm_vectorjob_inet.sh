@@ -56,6 +56,9 @@
 # Any nodes to exclude from selection
 # #SBATCH --exclude=charles[05,12-18]
 
+# Request a node
+#SBATCH --nodelist=damnii07
+
 
 # =====================
 # Logging information
