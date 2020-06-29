@@ -200,7 +200,8 @@ def plot_high_gpu_loss_graphs():
         # if 'lsm0' in name_arr[i]:
             # print(i)
             # if i > 8 and i <= 17:
-        times, losses, total_time = plot_loss_dict(times, losses, total_time, dict, name_arr[i], vert_shift=0)
+        if i < 2:
+            times, losses, total_time = plot_loss_dict(times, losses, total_time, dict, name_arr[i], vert_shift=0)
     # N = 1200
     # losses = np.convolve(losses, np.ones((N,))/N, mode='valid')
     times = np.asarray(times).astype(float)
@@ -259,7 +260,7 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='953763')
+    slurm_dirs = get_logs(slurm_exp='955646')
     print(slurm_dirs)
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.
