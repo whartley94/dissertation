@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('--in_path', type=str, default='/data/big/dataset/ILSVRC2012')
 parser.add_argument('--out_path', type=str, default='./dataset/ilsvrc2012/')
 parser.add_argument('--partition', type=str, default='')
-train_loc = 'train'
+train_loc = 'TrainFolders'
 
 opt = parser.parse_args()
 orig_path = opt.in_path
