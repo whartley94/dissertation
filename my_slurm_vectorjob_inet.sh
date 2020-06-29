@@ -161,8 +161,10 @@ for f in ${code}*.tar; do
   d=`basename "$f" .tar`
   dpath="${code}TrainFolders/$d"
   echo "${dpath}"
-  mkdir -p "${dpath}"
-  tar --keep-newer-files -xf "$f" -C "${dpath}"
+  if [[ ! -d "$dpath" ]]; then
+  	mkdir -p "${dpath}"
+  	tar --keep-newer-files -xf "$f" -C "${dpath}"
+  fi
 done
 
 echo "Forming Symlink Datafiles:"
