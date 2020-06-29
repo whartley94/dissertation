@@ -18,14 +18,14 @@ cpoint_path = f'{SCRATCH_HOME}/checkpoints'
 
 base_call = f"python train.py --sample_p .1 --niter_decay 0 --display_id -1 " \
     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train_partition " \
-    f"--batch_size 128 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.000001 --weighted_mask"
-# base_call2 = f"python train.py --name Auto --sample_p .125 --niter 20 --niter_decay 0 --lr 0.000001 --display_id -1 " \
+    f"--batch_size 128 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.00001 --weighted_mask"
+# base_call2 = f"python train.py --name Auto --sample_p .125 --niter 20 --niter_decay 0 --lr 0.00001 --display_id -1 " \
 #     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train --load_sg_model"
 
 # data_call = f
 
 
-# train.py --name siggraph_reg2 --sample_p .125 --niter 20 --niter_decay 0 --lr 0.000001 --load_model --phase train
+# train.py --name siggraph_reg2 --sample_p .125 --niter 20 --niter_decay 0 --lr 0.00001 --load_model --phase train
 
 # --gpu_ids 0,1,2,3 --batch_size 25 --phase train_small
 # learning_rates = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
@@ -58,7 +58,7 @@ assert len(flattened_list) == len(portion_vec)
 # settings = [i for i in flattened_list]
 # print(settings)
 
-output_file = open("experiments_vec.txt", "w")
+output_file = open("lr_experiments_vec.txt", "w")
 output_file2 = open("portions_vec.txt", "w")
 
 for i in flattened_list:
