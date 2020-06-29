@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('--in_path', type=str, default='/data/big/dataset/ILSVRC2012')
 parser.add_argument('--out_path', type=str, default='./dataset/ilsvrc2012/')
 parser.add_argument('--partition', type=str, default='')
-train_loc = 'TrainFolders'
+train_loc = 'train'
 
 opt = parser.parse_args()
 orig_path = opt.in_path
@@ -31,13 +31,37 @@ for train_subdir in train_subdirs[:10]:
 	os.symlink(os.path.join(opt.in_path,train_loc,train_subdir),os.path.join(trn_small_path,train_subdir))
 print('Making small training set in...[%s]'%trn_small_path)
 
-# Copy over whole training set
-trn_path = os.path.join(opt.out_path, 'train')
+# # Copy over whole training set
+# trn_path = os.path.join(opt.out_path, 'train')
+# print(trn_path)
+# if os.path.isdir(trn_path):
+# 	os.unlink(trn_path)
+# # 	os.rmdir(trn_path)
+# util.mkdirs(opt.out_path)
+# os.symlink(os.path.join(opt.in_path,train_loc),trn_path)
+# print('Making training set in...[%s]'%trn_path)
+
+
+# Copy over part of training set (for initializer)
+trn_path = os.path.join(opt.out_path,'train')
 if os.path.isdir(trn_path):
-	os.unlink(trn_path)
-util.mkdirs(opt.out_path)
-os.symlink(os.path.join(opt.in_path,train_loc),trn_path)
+	try:
+		os.unlink(trn_path)
+		print('Unlink')
+	except:
+		print('Cant unlink')
+	try:
+		shutil.rmtree(trn_path)
+		print('Rmtree')
+	except:
+		print('Cant rmtree')
+util.mkdirs(trn_path)
+
+# print(train_subdirs)
+for train_subdir in train_subdirs:
+	os.symlink(os.path.join(opt.in_path,train_loc,train_subdir),os.path.join(trn_path,train_subdir))
 print('Making training set in...[%s]'%trn_path)
+
 
 
 # Copy over training partition
