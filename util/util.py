@@ -435,7 +435,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
         just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
         ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
         # labels = dbscan_encoded_indexed(ab_bins)
-        labels = bins_scimage_group_minimal(ab_bins)
+        labels, num_labels = bins_scimage_group_minimal(ab_bins)
         # print('Extracted', nn/N)
 
 
@@ -472,7 +472,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 bin_colour = ab_decoded[0, :, h:h + P, w:w + P]
 
             unique_bins = np.unique(labels[h:h+P, w:w+P])
-            # print(unique_bins)
+
             if len(unique_bins) == 1:
                 num_same_bin = len(labels[labels==unique_bins[0]])
                 weight1 = float(num_same_bin/(opt.fineSize**2))
@@ -483,6 +483,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 # print(hint)
                 data['hint_B'][nn, 0, center_h, center_w] = hint[0][0]
                 data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
