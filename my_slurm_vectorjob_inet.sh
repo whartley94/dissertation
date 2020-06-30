@@ -153,6 +153,7 @@ cpoint_path=${SCRATCH_HOME}/checkpoints/${MODEL_NAME}
 mkdir -p ${cpoint_path}  # make it if required
 caffe_path=${SCRATCH_HOME}/checkpoints/siggraph_caffemodel
 mkdir -p ${caffe_path}  # make it if required
+rsync --archive --update --compress --progress ${cpoint_path}/ ${model_src}
 rsync --archive --update --compress --progress ${model_src}/ ${cpoint_path}
 rsync --archive --update --compress --progress ${caffe_src}/ ${caffe_path}
 

@@ -200,8 +200,8 @@ def plot_high_gpu_loss_graphs():
         # if 'lsm0' in name_arr[i]:
             # print(i)
             # if i > 8 and i <= 17:
-        if i < 2:
-            times, losses, total_time = plot_loss_dict(times, losses, total_time, dict, name_arr[i], vert_shift=0)
+        # if i < 2:
+        times, losses, total_time = plot_loss_dict(times, losses, total_time, dict, name_arr[i], vert_shift=0)
     # N = 1200
     # losses = np.convolve(losses, np.ones((N,))/N, mode='valid')
     times = np.asarray(times).astype(float)
@@ -260,7 +260,7 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='955646')
+    slurm_dirs = get_logs(slurm_exp='955987')
     print(slurm_dirs)
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     # Prepare data for plotting
     phase_num = [len(i) for i in phase_arr]  # Convert phase ('train'/'train_small') to an integer for plotting.
     # print(time_epoch[:, 2])
-    times = np.mean(time_epoch[:, 2])  # Find the average time per epoch for each experiment.
+    # times = np.mean(time_epoch[:, 2])  # Find the average time per epoch for each experiment.
     # fails = [np.isnan(i) for i in times]
     # g_ce_arr[fails] = np.nan  # Zero out any losses for epochs which didn't complete.
     trains = [i == 'train' for i in phase_arr]  # Indexes of .out files with 'train' experiments.
