@@ -18,7 +18,7 @@ cpoint_path = f'{SCRATCH_HOME}/checkpoints'
 
 base_call = f"python train.py --sample_p .1 --niter_decay 0 --display_id -1 " \
     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train_partition " \
-    f"--batch_size 128 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.00001 --weighted_mask"
+    f"--batch_size 128 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.000001 --weighted_mask"
 # base_call2 = f"python train.py --name Auto --sample_p .125 --niter 20 --niter_decay 0 --lr 0.00001 --display_id -1 " \
 #     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train --load_sg_model"
 
@@ -36,15 +36,11 @@ components = ['niter', 'epoch_count']
 #           12, 13, 14, 15, 16, 17, 18, 19, 20,
 #           21, 22, 23, 24, 25, 26, 27, 28, 29,
 #           38, 47]
-niters = np.arange(1, 56, 1)
+niters = np.arange(1, 16, 1)
 # epoch_counts = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-epoch_counts = np.arange(0, 55, 1)
+epoch_counts = np.arange(0, 15, 1)
 flattened_list  = list(zip(niters, epoch_counts))
-portion_vec = ['n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
-               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
-               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
-               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1',
-               'n01', 'n02', 'n03', 'n04', 'n05', 'n06', 'n07', 'n08', 'n09', 'n10', 'n1']
+portion_vec = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
 assert len(flattened_list) == len(portion_vec)
 # print(flattened_list)
 # batch_sizes = [32, 64, 98, 128]
@@ -58,7 +54,7 @@ assert len(flattened_list) == len(portion_vec)
 # settings = [i for i in flattened_list]
 # print(settings)
 
-output_file = open("lr_experiments_vec.txt", "w")
+output_file = open("experiments_vec.txt", "w")
 output_file2 = open("portions_vec.txt", "w")
 
 for i in flattened_list:

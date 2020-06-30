@@ -57,13 +57,13 @@
 # #SBATCH --exclude=charles[05,12-18]
 
 # Request a node
-#SBATCH --nodelist=damnii08
+#SBATCH --nodelist=damnii07
 
 
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=retraincaffeinettestflushlr
+MODEL_NAME=wholeinet
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"
@@ -171,7 +171,7 @@ echo "Forming Symlink Datafiles:"
 sorted_path=${SCRATCH_HOME}/dataset
 echo "OG Dataset Dir: ${dest_path}"
 echo "Sorted Dataset Dir: ${sorted_path}"
-python make_ilsvrc_dataset_set.py --in_path ${dest_path} --out_path ${sorted_path} --partition ${COMMAND}
+python make_ilsvrc_dataset_set.py --in_path ${dest_path} --out_path ${sorted_path}
 
 
 # ==============================
