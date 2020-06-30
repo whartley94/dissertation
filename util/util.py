@@ -70,11 +70,13 @@ def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
     return real_im
 
 
-def draw_bbox(mx, bbox, col, nn):
-    h1 = bbox[0]-1
-    w1 = bbox[1]-1
-    h2 = bbox[2]-1
-    w2 = bbox[3]-1
+def draw_bbox(mx, bbox, col, nn, opt):
+    shift=1
+    h1 = np.clip(bbox[0], 0, opt.fineSize-shift)
+    w1 = np.clip(bbox[1], 0, opt.fineSize-shift)
+    h2 = np.clip(bbox[2], 0, opt.fineSize-shift)
+    w2 = np.clip(bbox[3], 0, opt.fineSize-shift)
+    # print(h1, h2, w1, w2)
 
     # print(h1, h2, w1, w2)
     # print(col)
@@ -93,11 +95,12 @@ def draw_bbox(mx, bbox, col, nn):
         mx[nn, 1, runr, w2] = col[1]
     return mx
 
-def draw_bbox_1d(mx, bbox, col, nn):
-    h1 = bbox[0]-1
-    w1 = bbox[1]-1
-    h2 = bbox[2]-1
-    w2 = bbox[3]-1
+def draw_bbox_1d(mx, bbox, col, nn, opt):
+    shift = 1
+    h1 = np.clip(bbox[0], 0, opt.fineSize-shift)
+    w1 = np.clip(bbox[1], 0, opt.fineSize-shift)
+    h2 = np.clip(bbox[2], 0, opt.fineSize-shift)
+    w2 = np.clip(bbox[3], 0, opt.fineSize-shift)
     # print(h1, h2, w1, w2)
     # print(col)
 
@@ -510,6 +513,8 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
 
     data['hint_B'] = torch.zeros_like(data['B'])
     data['mask_B'] = torch.zeros_like(data['A'])
+    if opt.plot_data_gen:
+        data['labels'] = torch.zeros_like(data['A'])
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -519,6 +524,8 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
         ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
         # labels = dbscan_encoded_indexed(ab_bins)
         labels, num_labels = bins_scimage_group_minimal(ab_bins)
+        if opt.plot_data_gen:
+            data['labels'][nn, :, :, :] = torch.tensor(labels)
         region_prop = measure.regionprops(labels)
 
         # print(region_prop[0].bbox)
@@ -573,7 +580,7 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 bbox = region_prop[label-1].bbox
                 # print(bbox)
                 # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
-                data['hint_B'] = draw_bbox(data['hint_B'], bbox, hint[0], nn)
+                data['hint_B'] = draw_bbox(data['hint_B'], bbox, hint[0], nn, opt)
 
 
                 data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
@@ -585,7 +592,7 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
                 col = weight1 + opt.mask_cent
 
-                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn)
+                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt)
 
                 # increment counter
                 pp+=1
@@ -801,18 +808,23 @@ def plot_data(data, opt):
         hint_im = tensor2im(hint_rgb)
         hint_im[mask_im==-0.5] = 0
 
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(14, 3.5))
+        labels = data['labels'][nn, 0, :, :]
+
+
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 3.5))
         # fx_image = util.tensor2im(rgb_img)
         # cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
         c = ax1.imshow(lab_im)
         ax2.imshow(rgb_im)
         im3 = ax3.imshow(mask_im, vmin=-0.5, vmax =1)
         fig.colorbar(im3, ax=ax3)
         ax4.imshow(hint_im)
-        # ax5.imshow(out_im)
+        ax5.imshow(labels, cmap=cmap)
         ax1.set_title('Original')
         ax2.set_title('ab Channels')
         ax3.set_title('Weighted Mask')
         ax4.set_title('Colour Hints')
+        ax5.set_title('Labels')
         plt.tight_layout()
         plt.show()

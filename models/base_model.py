@@ -105,6 +105,14 @@ class BaseModel():
                 else:
                     torch.save(net.cpu().state_dict(), save_path)
 
+        if self.opt.save_optimizer:
+            for gg, optimizer in enumerate(self.optimizers):
+                # print(optimizer.state_dict())
+                save_filename = '%s_optimizer_%s.pth' % (which_epoch, str(gg))
+                save_path = os.path.join(self.save_dir, save_filename)
+                torch.save(optimizer.state_dict(), save_path)
+
+
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         key = keys[i]
         if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
@@ -139,6 +147,17 @@ class BaseModel():
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
 
+        if self.opt.save_optimizer:
+            for gg, optimizer in enumerate(self.optimizers):
+                print(optimizer)
+                load_filename = '%s_optimizer_%s.pth' % (which_epoch, str(gg))
+                # print((load_filename))
+                load_path = os.path.join(self.save_dir, load_filename)
+                # optimizer_state_dict =
+                if os.path.isfile(load_path):
+                    optimizer.load_state_dict(torch.load(load_path))
+                    # print(optimizer.state_dict())
+                    # print('loaded')
 
     # load sigg models from the disk
     def load_sg_networks(self, checkpoints_dir):
