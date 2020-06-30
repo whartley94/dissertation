@@ -11,7 +11,11 @@ import re
 def get_logs(slurm_exp):
     slurm_dirs = []
     for i in os.listdir(slurm_log_dir):
-        if '.out' in i and slurm_exp in i:
+        stand = False
+        for j in slurm_exp:
+            if j in i:
+                stand = True
+        if '.out' in i and stand:
             slurm_dirs.append(i)
     # slurm_dirs.sort()
     slurm_dirs.sort(key=lambda f: int(re.sub('\D', '', f)))
@@ -260,7 +264,7 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp='955987')
+    slurm_dirs = get_logs(slurm_exp=['955987','956170', '956271'])
     print(slurm_dirs)
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.

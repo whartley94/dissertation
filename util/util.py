@@ -5,9 +5,16 @@ from PIL import Image
 import os
 from collections import OrderedDict
 import cv2 as cv
+from scipy.ndimage import convolve
 from sklearn.cluster import DBSCAN
 import sklearn
+import skimage.morphology
 from skimage import measure
+import skimage.filters.rank
+from scipy import signal
+from skimage.segmentation import find_boundaries
+from skimage.measure import find_contours, approximate_polygon, \
+    subdivide_polygon
 import matplotlib
 from IPython import embed
 import matplotlib.pyplot as plt
@@ -70,8 +77,78 @@ def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
     return real_im
 
 
+def draw_c(mx, bbox, col, nn, opt, convex_image):
+    shift = 1
+    h1 = bbox[0]
+    w1 = bbox[1]
+    h2 = bbox[2]
+    w2 = bbox[3]
+    # print(h1, h2, w1, w2)
+
+    # print(h1, h2, w1, w2)
+    # print(col)
+    assert w2>w1
+    assert h2>h1
+
+    # print(mx[nn, 0, h1:h2, w1:w2].shape)
+    # print(convex_image)
+    mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col[0]
+    mx[nn, 1, h1:h2, w1:w2][torch.tensor(convex_image)==True] = col[1]
+
+    # for m,n in coords:
+    #     mx[nn, 0, m+h1, n+w1] = 10
+    #     mx[nn, 1, m+h1, n+w1] = 10
+
+    # mx[nn, 1, h1:h2, w1:w2][convex_image] = 10
+    # mx[nn, 1, h1:h2, w1:w2] = torch.tensor(convex_image)
+    #
+    # for runr in range(w1, w2+1, 1):
+    #     mx[nn, 0, h1, runr] = col[0]
+    #     mx[nn, 1, h1, runr] = col[1]
+    #     mx[nn, 0, h2, runr] = col[0]
+    #     mx[nn, 1, h2, runr] = col[1]
+    # for runr in range(h1, h2+1, 1):
+    #     mx[nn, 0, runr, w1] = col[0]
+    #     mx[nn, 0, runr, w2] = col[0]
+    #     mx[nn, 1, runr, w1] = col[1]
+    #     mx[nn, 1, runr, w2] = col[1]
+    return mx
+
+def draw_c_1d(mx, bbox, col, nn, opt, convex_image):
+    shift = 1
+    h1 = bbox[0]
+    w1 = bbox[1]
+    h2 = bbox[2]
+    w2 = bbox[3]
+    # print(h1, h2, w1, w2)
+
+    # print(h1, h2, w1, w2)
+    # print(col)
+    assert w2>w1
+    assert h2>h1
+
+    # print(mx[nn, 0, h1:h2, w1:w2].shape)
+    # print(convex_image)
+    mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col
+    # mx[nn, 1, h1:h2, w1:w2][torch.tensor(convex_image)==True] = col[1]
+
+    # mx[nn, 1, h1:h2, w1:w2][convex_image] = 10
+    # mx[nn, 1, h1:h2, w1:w2] = torch.tensor(convex_image)
+    #
+    # for runr in range(w1, w2+1, 1):
+    #     mx[nn, 0, h1, runr] = col[0]
+    #     mx[nn, 1, h1, runr] = col[1]
+    #     mx[nn, 0, h2, runr] = col[0]
+    #     mx[nn, 1, h2, runr] = col[1]
+    # for runr in range(h1, h2+1, 1):
+    #     mx[nn, 0, runr, w1] = col[0]
+    #     mx[nn, 0, runr, w2] = col[0]
+    #     mx[nn, 1, runr, w1] = col[1]
+    #     mx[nn, 1, runr, w2] = col[1]
+    return mx
+
 def draw_bbox(mx, bbox, col, nn, opt):
-    shift=1
+    shift = 1
     h1 = np.clip(bbox[0], 0, opt.fineSize-shift)
     w1 = np.clip(bbox[1], 0, opt.fineSize-shift)
     h2 = np.clip(bbox[2], 0, opt.fineSize-shift)
@@ -83,12 +160,12 @@ def draw_bbox(mx, bbox, col, nn, opt):
     assert w2>w1
     assert h2>h1
 
-    for runr in range(w1, w2, 1):
+    for runr in range(w1, w2+1, 1):
         mx[nn, 0, h1, runr] = col[0]
         mx[nn, 1, h1, runr] = col[1]
         mx[nn, 0, h2, runr] = col[0]
         mx[nn, 1, h2, runr] = col[1]
-    for runr in range(h1, h2, 1):
+    for runr in range(h1, h2+1, 1):
         mx[nn, 0, runr, w1] = col[0]
         mx[nn, 0, runr, w2] = col[0]
         mx[nn, 1, runr, w1] = col[1]
@@ -104,10 +181,10 @@ def draw_bbox_1d(mx, bbox, col, nn, opt):
     # print(h1, h2, w1, w2)
     # print(col)
 
-    for i in range(w1, w2, 1):
+    for i in range(w1, w2+1, 1):
         mx[nn, 0, h1, i] = col
         mx[nn, 0, h2, i] = col
-    for j in range(h1, h2, 1):
+    for j in range(h1, h2+1, 1):
         mx[nn, 0, j, w1] = col
         mx[nn, 0, j, w2] = col
     return mx
@@ -338,7 +415,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
     data_lab = rgb2lab(data_raw[0], opt)
     data['A'] = data_lab[:,[0,],:,:]
     data['B'] = data_lab[:,1:,:,:]
-    if opt.weighted_mask or opt.bb_mask:
+    if opt.weighted_mask or opt.bb_mask or opt.pr_mask:
         data['lab'] = data_lab
         just_ab = torch.zeros_like(data_lab)
         just_ab[:, 1:, :, :] = data_lab[:, 1:, :, :]
@@ -351,7 +428,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
         mask = torch.sum(torch.abs(torch.max(torch.max(data['B'],dim=3)[0],dim=2)[0]-torch.min(torch.min(data['B'],dim=3)[0],dim=2)[0]),dim=1) >= thresh
         data['A'] = data['A'][mask,:,:,:]
         data['B'] = data['B'][mask,:,:,:]
-        if opt.weighted_mask or opt.bb_mask:
+        if opt.weighted_mask or opt.bb_mask or opt.pr_mask:
             data['abRgb'] = data['abRgb'][mask,:,:,:]
             data['lab'] = data['lab'][mask,:,:,:]
         # print('Removed %i points'%torch.sum(mask==0).numpy())
@@ -362,6 +439,8 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
         return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     elif opt.bb_mask:
         return add_bb_colour_patches(data, opt, p=p, num_points=num_points)
+    elif opt.pr_mask:
+        return add_pr_colour_patches(data, opt, p=p, num_points=num_points)
     else:
         return add_color_patches_rand_gt(data, opt, p=p, num_points=num_points)
 
@@ -569,8 +648,8 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
             unique_bins = np.unique(labels[h:h+P, w:w+P])
             # print(unique_bins)
             if len(unique_bins) == 1:
-                num_same_bin = len(labels[labels==unique_bins[0]])
-                weight1 = float(num_same_bin/(opt.fineSize**2))
+                # num_same_bin = len(labels[labels==unique_bins[0]])
+                # weight1 = float(num_same_bin/(opt.fineSize**2))
                 # print(weight1)
 
                 center_h = int(h + (P/2))
@@ -580,7 +659,9 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 bbox = region_prop[label-1].bbox
                 # print(bbox)
                 # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
-                data['hint_B'] = draw_bbox(data['hint_B'], bbox, hint[0], nn, opt)
+                # print(hint[0].shape)
+                # print(bin_colour[0].shape)
+                data['hint_B'] = draw_bbox(data['hint_B'], bbox, bin_colour[0], nn, opt)
 
 
                 data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
@@ -589,10 +670,181 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
 
-                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
-                col = weight1 + opt.mask_cent
+                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+                col = 0 + opt.mask_cent
+
 
                 data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt)
+
+                # increment counter
+                pp+=1
+
+    data['mask_B']-=opt.mask_cent
+    return data
+
+
+def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal'):
+# Add random color points sampled from ground truth based on:
+#   Number of points
+#   - if num_points is 0, then sample from geometric distribution, drawn from probability p
+#   - if num_points > 0, then sample that number of points
+#   Location of points
+#   - if samp is 'normal', draw from N(0.5, 0.25) of image
+#   - otherwise, draw from U[0, 1] of image
+#     print('Adding Weighted Colour Patches')
+    N,C,H,W = data['B'].shape
+
+    data['hint_B'] = torch.zeros_like(data['B'])
+    data['mask_B'] = torch.zeros_like(data['A'])
+    if opt.plot_data_gen:
+        data['labels'] = torch.zeros_like(data['A'])
+
+    for nn in range(N):
+        # print('Extracting', nn/N)
+
+        # print(data['abRgb'][nn, :, :, :].shape)
+        just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
+        ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
+        # labels = dbscan_encoded_indexed(ab_bins)
+        labels, num_labels = bins_scimage_group_minimal(ab_bins)
+        boundaries = find_boundaries(labels, mode='inner')
+        if opt.plot_data_gen:
+            data['labels'][nn, :, :, :] = torch.tensor(labels)
+        region_prop = measure.regionprops(labels)
+
+        # print(region_prop[0].bbox)
+        # print('Extracted', nn/N)
+
+
+        pp = 0
+        cont_cond = True
+        while(cont_cond):
+            if(num_points is None): # draw from geometric
+                # embed()
+                cont_cond = np.random.rand() < (1-p)
+            else: # add certain number of points
+                cont_cond = pp < num_points
+            if(not cont_cond): # skip out of loop if condition not met
+                continue
+
+            P = np.random.choice(opt.sample_Ps) # patch size
+            # P = 1
+
+            # sample location
+            if(samp=='normal'): # geometric distribution
+                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+            else: # uniform distribution
+                h = np.random.randint(H-P+1)
+                w = np.random.randint(W-P+1)
+
+
+
+            # add color point
+            if(use_avg):
+                # embed()
+                hint = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+                bin_colour = torch.mean(torch.mean(ab_decoded[0, :, h:h + P, w:w + P], dim=2, keepdim=True), dim=1,
+                                        keepdim=True).view(1, C, 1, 1)
+            else:
+                hint = data['B'][nn,:,h:h+P,w:w+P]
+                bin_colour = ab_decoded[0, :, h:h + P, w:w + P]
+
+            unique_bins = np.unique(labels[h:h+P, w:w+P])
+            # print(unique_bins)
+            if len(unique_bins) == 1:
+                # num_same_bin = len(labels[labels==unique_bins[0]])
+                # weight1 = float(num_same_bin/(opt.fineSize**2))
+                # print(weight1)
+
+                center_h = int(h + (P/2))
+                center_w = int(w + (P/2))
+
+                label = labels[center_h, center_w]
+
+                bbox = region_prop[label-1].bbox
+                h1 = bbox[0]
+                w1 = bbox[1]
+                h2 = bbox[2]
+                w2 = bbox[3]
+                convex_image = region_prop[label-1].convex_image
+                convex_image = np.asarray(convex_image).astype(np.uint8)
+                selem = skimage.morphology.disk(1)
+                edges = (skimage.filters.rank.minimum(convex_image, selem) == 0) &\
+                        (skimage.filters.rank.maximum(convex_image, selem) == 1)
+                # print(edges)
+                # print(convex_image)
+                bb = boundaries[h1:h2, w1:w2]
+
+                kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+                kernel = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
+                # kernel = np.ones((5,5))
+                # kernel[2, 2] = 0
+                c = convolve(convex_image, kernel, mode='constant')
+                # edges=np.asarray([c!=0] and [c!=8]).astype(int)
+                # edges=np.logical_not(edges)
+                # print(c.shape)
+                z = np.zeros(c.shape)
+                zz =  np.zeros(c.shape)
+                z[c!=np.sum(kernel)] = True
+                zz[c!=0] = True
+                zzz = np.logical_and(z, zz)
+                edges = zzz
+
+
+                # boundaries = find_boundaries(convex_image, mode='inner')
+                # boundaries_ix = np.zeros(boundaries.shape)
+                # boundaries_ix[boundaries==True] = 1
+                # img = np.zeros((opt.fineSize, opt.fineSize))
+                # img[h1:h2, w1:w2] = boundaries_ix
+                # # print(boundaries)
+                # # boundaries_ix = np.asarray(np.where(boundaries==True)).T
+                # # print(boundaries_ix)
+                # contour = find_contours(convex_image, 0)
+                # print(contour)
+                # g = np.zeros(boundaries.shape)
+                # g[:] = False
+                # for m in contour:
+                #     for n in m:
+                #         g[int(n[0]), int(n[1])] = True
+                # # print(contour)
+                # boundaries = g
+                # #
+                # coords = approximate_polygon(contour[0], tolerance=.2)
+                # plt.imshow(img)
+                # plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
+                #
+                # plt.show()
+                # print(boundaries.shape)
+                # print(boundaries)
+                # print(boundaries)
+                # print(convex_image.shape)
+                # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(9, 4))
+                # ax1.imshow(labels)
+                # ax1.imshow(convex_image)
+                # ax2.imshow(labels)
+                # plt.show()
+                # ax1.plot(new_hand[:, 0], new_hand[:, 1])
+                # ax1.plot(appr_hand[:, 0], appr_hand[:, 1])
+                # print(bbox)
+                # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
+                # print(hint[0].shape)
+                # print(bin_colour[0].shape)
+                data['hint_B'] = draw_c(data['hint_B'], bbox, bin_colour[0], nn, opt, edges)
+
+
+                data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
+                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+                # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+
+                # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+
+                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+                col = 0 + opt.mask_cent
+
+
+                # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
+                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, col, nn, opt, edges)
 
                 # increment counter
                 pp+=1
@@ -806,7 +1058,8 @@ def plot_data(data, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        hint_im[mask_im==-0.5] = 0
+        # if opt.bb_mask or opt.weighted_mask:
+        # hint_im[mask_im==-0.5] = 0
 
         labels = data['labels'][nn, 0, :, :]
 
@@ -817,7 +1070,10 @@ def plot_data(data, opt):
         cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
         c = ax1.imshow(lab_im)
         ax2.imshow(rgb_im)
-        im3 = ax3.imshow(mask_im, vmin=-0.5, vmax =1)
+        if opt.bb_mask or opt.pr_mask:
+            im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
+        if opt.weighted_mask:
+            im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=1)
         fig.colorbar(im3, ax=ax3)
         ax4.imshow(hint_im)
         ax5.imshow(labels, cmap=cmap)
