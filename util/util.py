@@ -77,7 +77,7 @@ def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
     return real_im
 
 
-def draw_c(mx, bbox, col, nn, opt, convex_image):
+def draw_c(mx, maskmx, bbox, col, nn, bg_col, opt, convex_image):
     shift = 1
     h1 = bbox[0]
     w1 = bbox[1]
@@ -90,10 +90,15 @@ def draw_c(mx, bbox, col, nn, opt, convex_image):
     assert w2>w1
     assert h2>h1
 
+    z = np.asarray([maskmx[nn, 0, h1:h2, w1:w2] == bg_col][0])
+    zz = convex_image
+    zzz = torch.tensor(np.logical_and(z, zz))
     # print(mx[nn, 0, h1:h2, w1:w2].shape)
     # print(convex_image)
-    mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col[0]
-    mx[nn, 1, h1:h2, w1:w2][torch.tensor(convex_image)==True] = col[1]
+    # mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col[0]
+    # mx[nn, 1, h1:h2, w1:w2][torch.tensor(convex_image)==True] = col[1]
+    mx[nn, 0, h1:h2, w1:w2][zzz] = col[0]
+    mx[nn, 1, h1:h2, w1:w2][zzz] = col[1]
 
     # for m,n in coords:
     #     mx[nn, 0, m+h1, n+w1] = 10
@@ -114,7 +119,7 @@ def draw_c(mx, bbox, col, nn, opt, convex_image):
     #     mx[nn, 1, runr, w2] = col[1]
     return mx
 
-def draw_c_1d(mx, bbox, col, nn, opt, convex_image):
+def draw_c_1d(mx, bbox, col, nn, opt, bg_col, convex_image):
     shift = 1
     h1 = bbox[0]
     w1 = bbox[1]
@@ -127,9 +132,13 @@ def draw_c_1d(mx, bbox, col, nn, opt, convex_image):
     assert w2>w1
     assert h2>h1
 
+    z = np.asarray([mx[nn, 0, h1:h2, w1:w2] == bg_col][0])
+    zz = convex_image
+    zzz = torch.tensor(np.logical_and(z, zz))
+
     # print(mx[nn, 0, h1:h2, w1:w2].shape)
     # print(convex_image)
-    mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col
+    mx[nn, 0, h1:h2, w1:w2][zzz] = col
     # mx[nn, 1, h1:h2, w1:w2][torch.tensor(convex_image)==True] = col[1]
 
     # mx[nn, 1, h1:h2, w1:w2][convex_image] = 10
@@ -776,7 +785,10 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
     if opt.plot_data_gen:
         data['labels'] = torch.zeros_like(data['A'])
     if opt.bin_variation:
-        data['mask_B'] -= 0.25
+        bg_col = -0.25
+        data['mask_B'] += bg_col
+    else:
+        bg_col = 0
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -806,6 +818,11 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
             if(not cont_cond): # skip out of loop if condition not met
                 continue
 
+            if opt.bin_variation:
+                if 1 in opt.sample_Ps:
+                    opt.sample_Ps.remove(1)
+                if 2 in opt.sample_Ps:
+                    opt.sample_Ps.remove(2)
             P = np.random.choice(opt.sample_Ps) # patch size
             # P = 1
 
@@ -862,7 +879,7 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 zzz = np.logical_and(z, zz)
                 edges = zzz
 
-                data['hint_B'] = draw_c(data['hint_B'], bbox, bin_colour[0], nn, opt, edges)
+                data['hint_B'] = draw_c(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt, edges)
 
 
                 data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
@@ -887,11 +904,12 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                     point_col = 1.25
                 else:
                     point_col = 0.5 + opt.mask_cent
+                    box_col = 0 + opt.mask_cent
 
 
-                col = 0 + opt.mask_cent
+                # col = 0 + opt.mask_cent
                 # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
-                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, box_col, nn, opt, edges)
+                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, box_col, nn, opt, bg_col, edges)
                 data['mask_B'][nn,:,center_h,center_w] = point_col
                 if opt.bin_variation:
                     data['mask_B'][nn, :, center_h+1, center_w] = 0.75
