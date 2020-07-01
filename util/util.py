@@ -761,27 +761,14 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 label = labels[center_h, center_w]
 
                 bbox = region_prop[label-1].bbox
-                h1 = bbox[0]
-                w1 = bbox[1]
-                h2 = bbox[2]
-                w2 = bbox[3]
                 convex_image = region_prop[label-1].convex_image
                 convex_image = np.asarray(convex_image).astype(np.uint8)
-                selem = skimage.morphology.disk(1)
-                edges = (skimage.filters.rank.minimum(convex_image, selem) == 0) &\
-                        (skimage.filters.rank.maximum(convex_image, selem) == 1)
-                # print(edges)
-                # print(convex_image)
-                bb = boundaries[h1:h2, w1:w2]
 
-                kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+
+                # kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
                 kernel = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
-                # kernel = np.ones((5,5))
-                # kernel[2, 2] = 0
                 c = convolve(convex_image, kernel, mode='constant')
-                # edges=np.asarray([c!=0] and [c!=8]).astype(int)
-                # edges=np.logical_not(edges)
-                # print(c.shape)
+
                 z = np.zeros(c.shape)
                 zz =  np.zeros(c.shape)
                 z[c!=np.sum(kernel)] = True
@@ -789,45 +776,6 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 zzz = np.logical_and(z, zz)
                 edges = zzz
 
-
-                # boundaries = find_boundaries(convex_image, mode='inner')
-                # boundaries_ix = np.zeros(boundaries.shape)
-                # boundaries_ix[boundaries==True] = 1
-                # img = np.zeros((opt.fineSize, opt.fineSize))
-                # img[h1:h2, w1:w2] = boundaries_ix
-                # # print(boundaries)
-                # # boundaries_ix = np.asarray(np.where(boundaries==True)).T
-                # # print(boundaries_ix)
-                # contour = find_contours(convex_image, 0)
-                # print(contour)
-                # g = np.zeros(boundaries.shape)
-                # g[:] = False
-                # for m in contour:
-                #     for n in m:
-                #         g[int(n[0]), int(n[1])] = True
-                # # print(contour)
-                # boundaries = g
-                # #
-                # coords = approximate_polygon(contour[0], tolerance=.2)
-                # plt.imshow(img)
-                # plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
-                #
-                # plt.show()
-                # print(boundaries.shape)
-                # print(boundaries)
-                # print(boundaries)
-                # print(convex_image.shape)
-                # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(9, 4))
-                # ax1.imshow(labels)
-                # ax1.imshow(convex_image)
-                # ax2.imshow(labels)
-                # plt.show()
-                # ax1.plot(new_hand[:, 0], new_hand[:, 1])
-                # ax1.plot(appr_hand[:, 0], appr_hand[:, 1])
-                # print(bbox)
-                # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
-                # print(hint[0].shape)
-                # print(bin_colour[0].shape)
                 data['hint_B'] = draw_c(data['hint_B'], bbox, bin_colour[0], nn, opt, edges)
 
 
@@ -837,12 +785,11 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
 
-                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+
                 col = 0 + opt.mask_cent
-
-
                 # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
                 data['mask_B'] = draw_c_1d(data['mask_B'], bbox, col, nn, opt, edges)
+                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
 
                 # increment counter
                 pp+=1
@@ -1056,7 +1003,7 @@ def plot_data(data, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        if opt.bb_mask or opt.weighted_mask:
+        if opt.bb_mask or opt.weighted_mask or opt.pr_mask:
             hint_im[mask_im==-0.5] = 0
 
         labels = data['labels'][nn, 0, :, :]
