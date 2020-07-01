@@ -147,7 +147,7 @@ def draw_c_1d(mx, bbox, col, nn, opt, convex_image):
     #     mx[nn, 1, runr, w2] = col[1]
     return mx
 
-def draw_bbox(mx, bbox, col, nn, opt):
+def draw_bbox(mx, maskmx, bbox, col, nn, bg_col, opt):
     shift = 1
     h1 = np.clip(bbox[0], 0, opt.fineSize-shift)
     w1 = np.clip(bbox[1], 0, opt.fineSize-shift)
@@ -161,18 +161,26 @@ def draw_bbox(mx, bbox, col, nn, opt):
     assert h2>h1
 
     for runr in range(w1, w2+1, 1):
-        mx[nn, 0, h1, runr] = col[0]
-        mx[nn, 1, h1, runr] = col[1]
-        mx[nn, 0, h2, runr] = col[0]
-        mx[nn, 1, h2, runr] = col[1]
+        if maskmx[nn, 0, h1, runr] == bg_col:
+            mx[nn, 0, h1, runr] = col[0]
+        if maskmx[nn, 0, h1, runr] == bg_col:
+            mx[nn, 1, h1, runr] = col[1]
+        if maskmx[nn, 0, h2, runr] == bg_col:
+            mx[nn, 0, h2, runr] = col[0]
+        if maskmx[nn, 0, h2, runr] == bg_col:
+            mx[nn, 1, h2, runr] = col[1]
     for runr in range(h1, h2+1, 1):
-        mx[nn, 0, runr, w1] = col[0]
-        mx[nn, 0, runr, w2] = col[0]
-        mx[nn, 1, runr, w1] = col[1]
-        mx[nn, 1, runr, w2] = col[1]
+        if maskmx[nn, 0, runr, w1] == bg_col:
+            mx[nn, 0, runr, w1] = col[0]
+        if maskmx[nn, 0, runr, w2] == bg_col:
+            mx[nn, 0, runr, w2] = col[0]
+        if maskmx[nn, 0, runr, w1] == bg_col:
+            mx[nn, 1, runr, w1] = col[1]
+        if maskmx[nn, 0, runr, w2] == bg_col:
+            mx[nn, 1, runr, w2] = col[1]
     return mx
 
-def draw_bbox_1d(mx, bbox, col, nn, opt):
+def draw_bbox_1d(mx, bbox, col, nn, bg_col, opt):
     shift = 1
     h1 = np.clip(bbox[0], 0, opt.fineSize-shift)
     w1 = np.clip(bbox[1], 0, opt.fineSize-shift)
@@ -182,11 +190,15 @@ def draw_bbox_1d(mx, bbox, col, nn, opt):
     # print(col)
 
     for i in range(w1, w2+1, 1):
-        mx[nn, 0, h1, i] = col
-        mx[nn, 0, h2, i] = col
+        if mx[nn, 0, h1, i] == bg_col:
+            mx[nn, 0, h1, i] = col
+        if mx[nn, 0, h2, i] == bg_col:
+            mx[nn, 0, h2, i] = col
     for j in range(h1, h2+1, 1):
-        mx[nn, 0, j, w1] = col
-        mx[nn, 0, j, w2] = col
+        if mx[nn, 0, j, w1] == bg_col:
+            mx[nn, 0, j, w1] = col
+        if mx[nn, 0, j, w2] == bg_col:
+            mx[nn, 0, j, w2] = col
     return mx
 
 def draw_fill_square(real_im, hb, wb, P, col, boarder=''):
@@ -438,9 +450,9 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
     if opt.weighted_mask:
         return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     elif opt.bb_mask:
-        return add_bb_colour_patches(data, opt, p=p, num_points=num_points)
+        return add_bb_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     elif opt.pr_mask:
-        return add_pr_colour_patches(data, opt, p=p, num_points=num_points)
+        return add_pr_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     else:
         return add_color_patches_rand_gt(data, opt, p=p, num_points=num_points)
 
@@ -509,6 +521,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
     data['hint_B'] = torch.zeros_like(data['B'])
     data['mask_B'] = torch.zeros_like(data['A'])
+    if opt.bin_variation:
+        data['mask_B'] -= 0.5
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -532,16 +546,26 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             if(not cont_cond): # skip out of loop if condition not met
                 continue
 
+            if opt.bin_variation:
+                if 1 in opt.sample_Ps:
+                    opt.sample_Ps.remove(1)
+                if 2 in opt.sample_Ps:
+                    opt.sample_Ps.remove(2)
             P = np.random.choice(opt.sample_Ps) # patch size
             # P = 1
 
-            # sample location
-            if(samp=='normal'): # geometric distribution
-                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
-                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
-            else: # uniform distribution
-                h = np.random.randint(H-P+1)
-                w = np.random.randint(W-P+1)
+            no_unique = True
+            while no_unique:
+
+                # sample location
+                if(samp=='normal'): # geometric distribution
+                    h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                    w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+                else: # uniform distribution
+                    h = np.random.randint(H-P+1)
+                    w = np.random.randint(W-P+1)
+                if len(np.unique(labels[h:h+P, w:w+P])) == 1:
+                    no_unique = False
 
             # add color point
             if(use_avg):
@@ -565,12 +589,30 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 # print(hint)
                 data['hint_B'][nn, 0, center_h, center_w] = hint[0][0]
                 data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+                if opt.bin_variation:
+                    # print(hint[0][0])
+                    # print(bin_colour[0][0])
+                    data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
 
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
 
-                data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                if opt.bin_variation:
+                    data['mask_B'][nn, :, center_h+1, center_w] = weight1 + opt.mask_cent
+                    data['mask_B'][nn, :, center_h-1, center_w] = weight1 + opt.mask_cent
+                    data['mask_B'][nn, :, center_h, center_w+1] = weight1 + opt.mask_cent
+                    data['mask_B'][nn, :, center_h, center_w-1] = weight1 + opt.mask_cent
+                    data['mask_B'][nn, :, center_h, center_w] = 0
+                else:
+                    data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
 
                 # increment counter
                 pp+=1
@@ -594,6 +636,11 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
     data['mask_B'] = torch.zeros_like(data['A'])
     if opt.plot_data_gen:
         data['labels'] = torch.zeros_like(data['A'])
+    if opt.bin_variation:
+        bg_col = -0.25
+        data['mask_B'] += bg_col
+    else:
+        bg_col = 0
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -622,16 +669,26 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
             if(not cont_cond): # skip out of loop if condition not met
                 continue
 
+            if opt.bin_variation:
+                if 1 in opt.sample_Ps:
+                    opt.sample_Ps.remove(1)
+                if 2 in opt.sample_Ps:
+                    opt.sample_Ps.remove(2)
             P = np.random.choice(opt.sample_Ps) # patch size
             # P = 1
 
-            # sample location
-            if(samp=='normal'): # geometric distribution
-                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
-                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
-            else: # uniform distribution
-                h = np.random.randint(H-P+1)
-                w = np.random.randint(W-P+1)
+            no_unique = True
+            while no_unique:
+
+                # sample location
+                if(samp=='normal'): # geometric distribution
+                    h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                    w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+                else: # uniform distribution
+                    h = np.random.randint(H-P+1)
+                    w = np.random.randint(W-P+1)
+                if len(np.unique(labels[h:h+P, w:w+P])) == 1:
+                    no_unique = False
 
 
 
@@ -661,17 +718,39 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
                 # print(hint[0].shape)
                 # print(bin_colour[0].shape)
-                data['hint_B'] = draw_bbox(data['hint_B'], bbox, bin_colour[0], nn, opt)
+                data['hint_B'] = draw_bbox(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt)
 
 
                 data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
                 data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+
+                if opt.bin_variation:
+                    # print(hint[0][0])
+                    # print(bin_colour[0][0])
+                    data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-                col = 0 + opt.mask_cent
-                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt)
-                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+                if opt.bin_variation:
+                    box_col = 0.25
+                    point_col = 1.25
+                else:
+                    box_col = 0 + opt.mask_cent
+                    point_col = 0.5 + opt.mask_cent
+                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, box_col, nn, bg_col, opt)
+                data['mask_B'][nn,:,center_h,center_w] = point_col
+                if opt.bin_variation:
+                    data['mask_B'][nn, :, center_h+1, center_w] = 0.75
+                    data['mask_B'][nn, :, center_h-1, center_w] = 0.75
+                    data['mask_B'][nn, :, center_h, center_w+1] = 0.75
+                    data['mask_B'][nn, :, center_h, center_w-1] = 0.75
 
 
                 # increment counter
@@ -696,6 +775,8 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
     data['mask_B'] = torch.zeros_like(data['A'])
     if opt.plot_data_gen:
         data['labels'] = torch.zeros_like(data['A'])
+    if opt.bin_variation:
+        data['mask_B'] -= 0.25
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -728,13 +809,18 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
             P = np.random.choice(opt.sample_Ps) # patch size
             # P = 1
 
-            # sample location
-            if(samp=='normal'): # geometric distribution
-                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
-                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
-            else: # uniform distribution
-                h = np.random.randint(H-P+1)
-                w = np.random.randint(W-P+1)
+            no_unique = True
+            while no_unique:
+
+                # sample location
+                if(samp=='normal'): # geometric distribution
+                    h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                    w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+                else: # uniform distribution
+                    h = np.random.randint(H-P+1)
+                    w = np.random.randint(W-P+1)
+                if len(np.unique(labels[h:h+P, w:w+P])) == 1:
+                    no_unique = False
 
 
 
@@ -782,14 +868,36 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
                 data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
-
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+
+                if opt.bin_variation:
+                    # print(hint[0][0])
+                    # print(bin_colour[0][0])
+                    data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
+                    data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
+
+                if opt.bin_variation:
+                    box_col = 0.25
+                    point_col = 1.25
+                else:
+                    point_col = 0.5 + opt.mask_cent
 
 
                 col = 0 + opt.mask_cent
                 # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
-                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, col, nn, opt, edges)
-                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, box_col, nn, opt, edges)
+                data['mask_B'][nn,:,center_h,center_w] = point_col
+                if opt.bin_variation:
+                    data['mask_B'][nn, :, center_h+1, center_w] = 0.75
+                    data['mask_B'][nn, :, center_h-1, center_w] = 0.75
+                    data['mask_B'][nn, :, center_h, center_w+1] = 0.75
+                    data['mask_B'][nn, :, center_h, center_w-1] = 0.75
 
                 # increment counter
                 pp+=1
@@ -1003,10 +1111,19 @@ def plot_data(data, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        if opt.bb_mask or opt.weighted_mask or opt.pr_mask:
-            hint_im[mask_im==-0.5] = 0
+        if opt.weighted_mask:
+            if opt.bin_variation:
+                hint_im[mask_im == -1] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
+        if opt.bb_mask or opt.pr_mask:
+            if opt.bin_variation:
+                hint_im[mask_im == -0.75] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
 
-        labels = data['labels'][nn, 0, :, :]
+        if opt.bb_mask or opt.pr_mask:
+            labels = data['labels'][nn, 0, :, :]
 
 
         fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 3.5))
@@ -1016,12 +1133,19 @@ def plot_data(data, opt):
         c = ax1.imshow(lab_im)
         ax2.imshow(rgb_im)
         if opt.bb_mask or opt.pr_mask:
-            im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
+            if opt.bin_variation:
+                im3 = ax3.imshow(mask_im, vmin=-0.75, vmax=0.75)
+            else:
+                im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
+            ax5.imshow(labels, cmap=cmap)
         if opt.weighted_mask:
-            im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=1)
+            if opt.bin_variation:
+                im3 = ax3.imshow(mask_im, vmin=-1, vmax=1)
+            else:
+                im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=1)
         fig.colorbar(im3, ax=ax3)
         ax4.imshow(hint_im)
-        ax5.imshow(labels, cmap=cmap)
+
         ax1.set_title('Original')
         ax2.set_title('ab Channels')
         ax3.set_title('Weighted Mask')
