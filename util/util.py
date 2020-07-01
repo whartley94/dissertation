@@ -169,24 +169,33 @@ def draw_bbox(mx, maskmx, bbox, col, nn, bg_col, opt):
     assert w2>w1
     assert h2>h1
 
-    for runr in range(w1, w2+1, 1):
-        if maskmx[nn, 0, h1, runr] == bg_col:
-            mx[nn, 0, h1, runr] = col[0]
-        if maskmx[nn, 0, h1, runr] == bg_col:
-            mx[nn, 1, h1, runr] = col[1]
-        if maskmx[nn, 0, h2, runr] == bg_col:
-            mx[nn, 0, h2, runr] = col[0]
-        if maskmx[nn, 0, h2, runr] == bg_col:
-            mx[nn, 1, h2, runr] = col[1]
-    for runr in range(h1, h2+1, 1):
-        if maskmx[nn, 0, runr, w1] == bg_col:
-            mx[nn, 0, runr, w1] = col[0]
-        if maskmx[nn, 0, runr, w2] == bg_col:
-            mx[nn, 0, runr, w2] = col[0]
-        if maskmx[nn, 0, runr, w1] == bg_col:
-            mx[nn, 1, runr, w1] = col[1]
-        if maskmx[nn, 0, runr, w2] == bg_col:
-            mx[nn, 1, runr, w2] = col[1]
+    mx[nn, 0, h1, w1:w2+1][maskmx[nn, 0, h1, w1:w2+1] == bg_col] = col[0]
+    mx[nn, 1, h1, w1:w2 + 1][maskmx[nn, 0, h1, w1:w2 + 1] == bg_col] = col[1]
+    mx[nn, 0, h2, w1:w2 + 1][maskmx[nn, 0, h2, w1:w2 + 1] == bg_col] = col[0]
+    mx[nn, 1, h2, w1:w2 + 1][maskmx[nn, 0, h2, w1:w2 + 1] == bg_col] = col[1]
+    # for runr in range(w1, w2+1, 1):
+        # if maskmx[nn, 0, h1, runr] == bg_col:
+        #     mx[nn, 0, h1, runr] = col[0]
+        # if maskmx[nn, 0, h1, runr] == bg_col:
+        #     mx[nn, 1, h1, runr] = col[1]
+        # if maskmx[nn, 0, h2, runr] == bg_col:
+        #     mx[nn, 0, h2, runr] = col[0]
+        # if maskmx[nn, 0, h2, runr] == bg_col:
+        #     mx[nn, 1, h2, runr] = col[1]
+
+    mx[nn, 0, h1:h2+1, w1][maskmx[nn, 0, h1:h2+1, w1] == bg_col] = col[0]
+    mx[nn, 1, h1:h2+1, w1][maskmx[nn, 0, h1:h2+1, w1] == bg_col] = col[1]
+    mx[nn, 0, h1:h2+1, w2][maskmx[nn, 0, h1:h2+1, w2] == bg_col] = col[0]
+    mx[nn, 1, h1:h2+1, w2][maskmx[nn, 0, h1:h2+1, w2] == bg_col] = col[1]
+    # for runr in range(h1, h2+1, 1):
+    #     if maskmx[nn, 0, runr, w1] == bg_col:
+    #         mx[nn, 0, runr, w1] = col[0]
+    #     if maskmx[nn, 0, runr, w2] == bg_col:
+    #         mx[nn, 0, runr, w2] = col[0]
+    #     if maskmx[nn, 0, runr, w1] == bg_col:
+    #         mx[nn, 1, runr, w1] = col[1]
+    #     if maskmx[nn, 0, runr, w2] == bg_col:
+    #         mx[nn, 1, runr, w2] = col[1]
     return mx
 
 def draw_bbox_1d(mx, bbox, col, nn, bg_col, opt):
@@ -197,17 +206,20 @@ def draw_bbox_1d(mx, bbox, col, nn, bg_col, opt):
     w2 = np.clip(bbox[3], 0, opt.fineSize-shift)
     # print(h1, h2, w1, w2)
     # print(col)
-
-    for i in range(w1, w2+1, 1):
-        if mx[nn, 0, h1, i] == bg_col:
-            mx[nn, 0, h1, i] = col
-        if mx[nn, 0, h2, i] == bg_col:
-            mx[nn, 0, h2, i] = col
-    for j in range(h1, h2+1, 1):
-        if mx[nn, 0, j, w1] == bg_col:
-            mx[nn, 0, j, w1] = col
-        if mx[nn, 0, j, w2] == bg_col:
-            mx[nn, 0, j, w2] = col
+    mx[nn, 0, h1, w1:w2+1][mx[nn, 0, h1, w1:w2+1] == bg_col] = col
+    mx[nn, 0, h2, w1:w2+1][mx[nn, 0, h2, w1:w2+1] == bg_col] = col
+    mx[nn, 0, h1:h2+1, w1][mx[nn, 0, h1:h2+1, w1] == bg_col] = col
+    mx[nn, 0, h1:h2+1, w2][mx[nn, 0, h1:h2+1, w2] == bg_col] = col
+    # for i in range(w1, w2+1, 1):
+    #     if mx[nn, 0, h1, i] == bg_col:
+    #         mx[nn, 0, h1, i] = col
+    #     if mx[nn, 0, h2, i] == bg_col:
+    #         mx[nn, 0, h2, i] = col
+    # for j in range(h1, h2+1, 1):
+    #     if mx[nn, 0, j, w1] == bg_col:
+    #         mx[nn, 0, j, w1] = col
+    #     if mx[nn, 0, j, w2] == bg_col:
+    #         mx[nn, 0, j, w2] = col
     return mx
 
 def draw_fill_square(real_im, hb, wb, P, col, boarder=''):
