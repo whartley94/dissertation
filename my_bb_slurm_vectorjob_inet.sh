@@ -63,7 +63,7 @@
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=wholeinet
+MODEL_NAME=bbwholeinet
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"
