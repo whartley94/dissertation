@@ -48,7 +48,7 @@
 #SBATCH --cpus-per-task=4
 
 # Maximum time for the job to run, format: days-hours:minutes:seconds
-# #SBATCH --time=1-08:00:00
+# #SBATCH --time=3-08:00:00
 
 # Partition of the cluster to pick nodes from (check `sinfo`)
 #SBATCH --partition=PGR-Standard
@@ -63,7 +63,7 @@
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=bbwholeinet
+MODEL_NAME=prbinwholeinet
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"

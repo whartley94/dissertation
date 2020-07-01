@@ -145,7 +145,8 @@ mkdir -p ${dest_path}  # make it if required
 portions_text_file=$2
 COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d\" ${portions_text_file}`"
 COMMANDGRAB="${COMMAND}*"
-rsync --archive --update --compress --progress --include ${COMMANDGRAB} --exclude '*' ${src_path}/ ${dest_path}
+# rsync --archive --update --compress --progress --include ${COMMANDGRAB} --exclude '*' ${src_path}/ ${dest_path}
+rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 echo "Rsync Completed"
 
 
