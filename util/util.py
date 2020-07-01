@@ -669,12 +669,10 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
                 # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-
-                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
                 col = 0 + opt.mask_cent
-
-
                 data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt)
+                data['mask_B'][nn,:,center_h,center_w] = 0.5 + opt.mask_cent
+
 
                 # increment counter
                 pp+=1
@@ -1058,8 +1056,8 @@ def plot_data(data, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        # if opt.bb_mask or opt.weighted_mask:
-        # hint_im[mask_im==-0.5] = 0
+        if opt.bb_mask or opt.weighted_mask:
+            hint_im[mask_im==-0.5] = 0
 
         labels = data['labels'][nn, 0, :, :]
 
