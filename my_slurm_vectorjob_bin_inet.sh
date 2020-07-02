@@ -51,7 +51,7 @@
 # #SBATCH --time=1-08:00:00
 
 # Partition of the cluster to pick nodes from (check `sinfo`)
-#SBATCH --partition=PGR-Standard
+#SBATCH --partition=Teach-LongJobs
 
 # Any nodes to exclude from selection
 # #SBATCH --exclude=charles[05,12-18]
@@ -63,7 +63,7 @@
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=wholeinet
+MODEL_NAME=binweightmask
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"
