@@ -87,10 +87,12 @@ if __name__ == '__main__':
 
     go_time = time.time()
     max_time = .5 * 60 * 60
+    max_time = 100
     time_since_go_time = time.time() - go_time
     print('TimeSinceGo', time_since_go_time)
 
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay):
+        print('StartingEpoch')
         epoch_start_time = time.time()
         iter_data_time = time.time()
         epoch_iter = 0
@@ -102,6 +104,7 @@ if __name__ == '__main__':
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
             time_since_go_time = time.time() - go_time
+            print('TimeSince Go Time', time_since_go_time)
             if time_since_go_time > max_time:
                 print('Breaking Data For Max Time')
                 break
@@ -117,7 +120,7 @@ if __name__ == '__main__':
                 continue
 
             iter_start_time = time.time()
-            print('Total Steps', total_steps)
+            # print('Total Steps', total_steps)
             if total_steps % opt.print_freq == 0:
                 # time to load data
                 t_data = iter_start_time - iter_data_time
