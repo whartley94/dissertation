@@ -586,6 +586,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             # P = 1
 
             no_unique = True
+            loop_cont = 0
             while no_unique:
 
                 # sample location
@@ -597,6 +598,9 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                     w = np.random.randint(W-P+1)
                 if len(np.unique(labels[h:h+P, w:w+P])) == 1:
                     no_unique = False
+                loop_cont += 1
+                if loop_cont > 10:
+                    break
 
             # add color point
             if(use_avg):
