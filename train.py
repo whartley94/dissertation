@@ -117,9 +117,7 @@ if __name__ == '__main__':
             if opt.plot_data_gen:
                 util.plot_data(data, opt)
             if(data is None):
-                print('DataIsNone')
-                break
-                # continue
+                continue
 
             iter_start_time = time.time()
             # print('Total Steps', total_steps)
