@@ -86,7 +86,7 @@ if __name__ == '__main__':
     print('Checkpoint Location: ', opt.checkpoints_dir)
 
     go_time = time.time()
-    max_time = 1 * 60 * 60
+    max_time = .5 * 60 * 60
     time_since_go_time = time.time() - go_time
     print('TimeSinceGo', time_since_go_time)
 
@@ -96,14 +96,14 @@ if __name__ == '__main__':
         epoch_iter = 0
         time_since_go_time = time.time() - go_time
         if time_since_go_time > max_time:
-            # print('Beaking Epoch For Max Time')
+            print('Beaking Epoch For Max Time')
             break
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
             time_since_go_time = time.time() - go_time
             if time_since_go_time > max_time:
-                # print('Breaking Data For Max Time')
+                print('Breaking Data For Max Time')
                 break
             # print('I', i)
             # print('Data_raw ', data_raw)
@@ -162,7 +162,8 @@ if __name__ == '__main__':
               (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
         model.update_learning_rate()
 
-    print('Times Up.. Save Model!')
+    print('Times Up or done.. Save Model!')
+    print(time_since_go_time)
     model.save_networks('latest')
     print('Model Saved')
 
