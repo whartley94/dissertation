@@ -147,7 +147,7 @@ class BaseOptions():
         opt.A = 2 * opt.ab_max / opt.ab_quant + 1
         opt.B = opt.A
 
-        opt.print_freq = opt.batch_size * 100  # Not sure if this is best?
+        opt.print_freq = opt.batch_size * 20  # Not sure if this is best?
 
         self.opt = opt
         return self.opt
