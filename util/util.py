@@ -79,20 +79,26 @@ def draw_square_twos(real_im, h1, h2, w1, w2, col, opt):
 
 def draw_c(mx, maskmx, bbox, col, nn, bg_col, opt, convex_image):
     shift = 1
-    h1 = bbox[0]
-    w1 = bbox[1]
-    h2 = bbox[2]
-    w2 = bbox[3]
+    h1 = np.clip(bbox[0], 0, opt.fineSize)
+    w1 = np.clip(bbox[1], 0, opt.fineSize)
+    h2 = np.clip(bbox[2], 0, opt.fineSize)
+    w2 = np.clip(bbox[3], 0, opt.fineSize)
     # print(h1, h2, w1, w2)
 
     # print(h1, h2, w1, w2)
     # print(col)
-    assert w2>w1
-    assert h2>h1
+    assert w2>w1, print('w2', w2, 'w1', w1)
+    assert h2>h1, print('h2', h1, 'h2', h1)
 
-    z = np.asarray([maskmx[nn, 0, h1:h2, w1:w2] == bg_col][0])
-    zz = convex_image
-    zzz = torch.tensor(np.logical_and(z, zz))
+    # z = np.asarray([maskmx[nn, 0, h1:h2, w1:w2] == bg_col][0])
+    # zz = convex_image
+    # zzz = torch.tensor(np.logical_and(z, zz))
+
+    z = torch.BoolTensor([maskmx[nn, 0, h1:h2, w1:w2] == bg_col][0])
+    zz =torch.BoolTensor(convex_image)
+    zzz = z & zz
+
+
     # print(mx[nn, 0, h1:h2, w1:w2].shape)
     # print(convex_image)
     # mx[nn, 0, h1:h2, w1:w2][torch.tensor(convex_image) == True] = col[0]
@@ -121,10 +127,14 @@ def draw_c(mx, maskmx, bbox, col, nn, bg_col, opt, convex_image):
 
 def draw_c_1d(mx, bbox, col, nn, opt, bg_col, convex_image):
     shift = 1
-    h1 = bbox[0]
-    w1 = bbox[1]
-    h2 = bbox[2]
-    w2 = bbox[3]
+    # h1 = bbox[0]
+    # w1 = bbox[1]
+    # h2 = bbox[2]
+    # w2 = bbox[3]
+    h1 = np.clip(bbox[0], 0, opt.fineSize)
+    w1 = np.clip(bbox[1], 0, opt.fineSize)
+    h2 = np.clip(bbox[2], 0, opt.fineSize)
+    w2 = np.clip(bbox[3], 0, opt.fineSize)
     # print(h1, h2, w1, w2)
 
     # print(h1, h2, w1, w2)
@@ -735,47 +745,56 @@ def add_bb_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
 
                 label = labels[center_h, center_w]
                 bbox = region_prop[label-1].bbox
-                # print(bbox)
-                # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
-                # print(hint[0].shape)
-                # print(bin_colour[0].shape)
-                data['hint_B'] = draw_bbox(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt)
+
+                shift = 1
+                h1 = np.clip(bbox[0], 0, opt.fineSize - shift)
+                w1 = np.clip(bbox[1], 0, opt.fineSize - shift)
+                h2 = np.clip(bbox[2], 0, opt.fineSize - shift)
+                w2 = np.clip(bbox[3], 0, opt.fineSize - shift)
+
+                if w2>w1 and h2>h1:
+
+                    # print(bbox)
+                    # print('B', data['hint_B'][nn, :, bbox[1]-1, bbox[3]-1])
+                    # print(hint[0].shape)
+                    # print(bin_colour[0].shape)
+                    data['hint_B'] = draw_bbox(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt)
 
 
-                data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
-                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+                    data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
 
-                if opt.bin_variation:
-                    # print(hint[0][0])
-                    # print(bin_colour[0][0])
-                    data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
-                # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+                    if opt.bin_variation:
+                        # print(hint[0][0])
+                        # print(bin_colour[0][0])
+                        data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
+                    # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
 
-                # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-                if opt.bin_variation:
-                    box_col = 0.25
-                    point_col = 1.25
-                else:
-                    box_col = 0 + opt.mask_cent
-                    point_col = 0.5 + opt.mask_cent
-                data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, box_col, nn, bg_col, opt)
-                data['mask_B'][nn,:,center_h,center_w] = point_col
-                if opt.bin_variation:
-                    data['mask_B'][nn, :, center_h+1, center_w] = 0.75
-                    data['mask_B'][nn, :, center_h-1, center_w] = 0.75
-                    data['mask_B'][nn, :, center_h, center_w+1] = 0.75
-                    data['mask_B'][nn, :, center_h, center_w-1] = 0.75
+                    # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
+                    if opt.bin_variation:
+                        box_col = 0.25
+                        point_col = 1.25
+                    else:
+                        box_col = 0 + opt.mask_cent
+                        point_col = 0.5 + opt.mask_cent
+                    data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, box_col, nn, bg_col, opt)
+                    data['mask_B'][nn,:,center_h,center_w] = point_col
+                    if opt.bin_variation:
+                        data['mask_B'][nn, :, center_h+1, center_w] = 0.75
+                        data['mask_B'][nn, :, center_h-1, center_w] = 0.75
+                        data['mask_B'][nn, :, center_h, center_w+1] = 0.75
+                        data['mask_B'][nn, :, center_h, center_w-1] = 0.75
 
 
-                # increment counter
-                pp+=1
+                    # increment counter
+                    pp+=1
 
     data['mask_B']-=opt.mask_cent
     return data
@@ -876,61 +895,67 @@ def add_pr_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='nor
                 label = labels[center_h, center_w]
 
                 bbox = region_prop[label-1].bbox
-                convex_image = region_prop[label-1].convex_image
-                convex_image = np.asarray(convex_image).astype(np.uint8)
+                h1 = bbox[0]
+                w1 = bbox[1]
+                h2 = bbox[2]
+                w2 = bbox[3]
+                if w2>w1 and h2>h1:
+
+                    convex_image = region_prop[label-1].convex_image
+                    convex_image = np.asarray(convex_image).astype(np.uint8)
 
 
-                # kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-                kernel = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
-                c = convolve(convex_image, kernel, mode='constant')
+                    # kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+                    kernel = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
+                    c = convolve(convex_image, kernel, mode='constant')
 
-                z = np.zeros(c.shape)
-                zz =  np.zeros(c.shape)
-                z[c!=np.sum(kernel)] = True
-                zz[c!=0] = True
-                zzz = np.logical_and(z, zz)
-                edges = zzz
+                    z = np.zeros(c.shape)
+                    zz =  np.zeros(c.shape)
+                    z[c!=np.sum(kernel)] = True
+                    zz[c!=0] = True
+                    zzz = np.logical_and(z, zz)
+                    edges = zzz
 
-                data['hint_B'] = draw_c(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt, edges)
-
-
-                data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
-                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
-                # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
-                # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
-
-                if opt.bin_variation:
-                    # print(hint[0][0])
-                    # print(bin_colour[0][0])
-                    data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
-                    data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
-                    data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
-
-                if opt.bin_variation:
-                    box_col = 0.25
-                    point_col = 1.25
-                else:
-                    point_col = 0.5 + opt.mask_cent
-                    box_col = 0 + opt.mask_cent
+                    data['hint_B'] = draw_c(data['hint_B'], data['mask_B'], bbox, bin_colour[0], nn, bg_col, opt, edges)
 
 
-                # col = 0 + opt.mask_cent
-                # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
-                data['mask_B'] = draw_c_1d(data['mask_B'], bbox, box_col, nn, opt, bg_col, edges)
-                data['mask_B'][nn,:,center_h,center_w] = point_col
-                if opt.bin_variation:
-                    data['mask_B'][nn, :, center_h+1, center_w] = 0.75
-                    data['mask_B'][nn, :, center_h-1, center_w] = 0.75
-                    data['mask_B'][nn, :, center_h, center_w+1] = 0.75
-                    data['mask_B'][nn, :, center_h, center_w-1] = 0.75
+                    data['hint_B'][nn,0,center_h,center_w] = hint[0][0]
+                    data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+                    # data['hint_B'][nn,:,h:h+P,w:w+P] = bin_colour
+                    # data['mask_B'][nn,:,h:h+P,w:w+P] = 1
 
-                # increment counter
-                pp+=1
+                    if opt.bin_variation:
+                        # print(hint[0][0])
+                        # print(bin_colour[0][0])
+                        data['hint_B'][nn, 0, center_h+1, center_w] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h+1, center_w] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h-1, center_w] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h-1, center_w] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h, center_w+1] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h, center_w+1] = bin_colour[0][1]
+                        data['hint_B'][nn, 0, center_h, center_w-1] = bin_colour[0][0]
+                        data['hint_B'][nn, 1, center_h, center_w-1] = bin_colour[0][1]
+
+                    if opt.bin_variation:
+                        box_col = 0.25
+                        point_col = 1.25
+                    else:
+                        point_col = 0.5 + opt.mask_cent
+                        box_col = 0 + opt.mask_cent
+
+
+                    # col = 0 + opt.mask_cent
+                    # data['mask_B'] = draw_bbox_1d(data['mask_B'], bbox, col, nn, opt,)
+                    data['mask_B'] = draw_c_1d(data['mask_B'], bbox, box_col, nn, opt, bg_col, edges)
+                    data['mask_B'][nn,:,center_h,center_w] = point_col
+                    if opt.bin_variation:
+                        data['mask_B'][nn, :, center_h+1, center_w] = 0.75
+                        data['mask_B'][nn, :, center_h-1, center_w] = 0.75
+                        data['mask_B'][nn, :, center_h, center_w+1] = 0.75
+                        data['mask_B'][nn, :, center_h, center_w-1] = 0.75
+
+                    # increment counter
+                    pp+=1
 
     data['mask_B']-=opt.mask_cent
     return data

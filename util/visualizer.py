@@ -183,7 +183,7 @@ class Visualizer():
             if k == 'G_L1_reg':
                 message2 += '%s: %.3f ' % (k, v)
 
-        print(message, flush=True)
+        print(message)
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)
         with open(self.short_log_name, "a") as log_file:

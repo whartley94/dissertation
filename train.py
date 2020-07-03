@@ -85,13 +85,26 @@ if __name__ == '__main__':
     print('GPUs Available', torch.cuda.device_count())
     print('Checkpoint Location: ', opt.checkpoints_dir)
 
+    go_time = time.time()
+    max_time = 5 * 60 * 60
+    time_since_go_time = time.time() - go_time
+    # print(time_since_go_time)
+
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay):
         epoch_start_time = time.time()
         iter_data_time = time.time()
         epoch_iter = 0
+        time_since_go_time = time.time() - go_time
+        if time_since_go_time > max_time:
+            print('Beaking Epoch For Max Time')
+            break
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
+            time_since_go_time = time.time() - go_time
+            if time_since_go_time > max_time:
+                print('Breaking Data For Max Time')
+                break
             # print('I', i)
             # print('Data_raw ', data_raw)
             # print('Data_raw 0', data_raw[0])
@@ -104,6 +117,7 @@ if __name__ == '__main__':
                 continue
 
             iter_start_time = time.time()
+            print('Total Steps', total_steps)
             if total_steps % opt.print_freq == 0:
                 # time to load data
                 t_data = iter_start_time - iter_data_time
@@ -147,3 +161,8 @@ if __name__ == '__main__':
         print('End of epoch %d / %d \t Time Taken: %d sec' %
               (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
         model.update_learning_rate()
+
+    print('Times Up.. Save Model!')
+    model.save_networks('latest')
+    print('Model Saved')
+
