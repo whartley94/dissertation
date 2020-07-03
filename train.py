@@ -11,7 +11,7 @@ import os
 from util import util
 
 if __name__ == '__main__':
-    print('Python Starting Script', flush=True)
+    print('Python Starting Script')
     opt = TrainOptions().parse()
 
     # opt.dataroot = './dataset/SUN2012/%s/' % opt.phase
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     go_time = time.time()
     max_time = 1 * 60 * 60
     time_since_go_time = time.time() - go_time
-    # print(time_since_go_time)
+    print('TimeSinceGo', time_since_go_time)
 
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay):
         epoch_start_time = time.time()
@@ -96,14 +96,14 @@ if __name__ == '__main__':
         epoch_iter = 0
         time_since_go_time = time.time() - go_time
         if time_since_go_time > max_time:
-            print('Beaking Epoch For Max Time')
+            # print('Beaking Epoch For Max Time')
             break
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
             time_since_go_time = time.time() - go_time
             if time_since_go_time > max_time:
-                print('Breaking Data For Max Time')
+                # print('Breaking Data For Max Time')
                 break
             # print('I', i)
             # print('Data_raw ', data_raw)
