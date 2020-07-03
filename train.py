@@ -86,7 +86,7 @@ if __name__ == '__main__':
     print('Checkpoint Location: ', opt.checkpoints_dir)
 
     go_time = time.time()
-    max_time = 5 * 60 * 60
+    max_time = 1 * 60 * 60
     time_since_go_time = time.time() - go_time
     # print(time_since_go_time)
 
