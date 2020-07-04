@@ -87,7 +87,6 @@ if __name__ == '__main__':
 
     go_time = time.time()
     max_time = 8 * 60 * 60
-    max_time = 100
     time_since_go_time = time.time() - go_time
     print('TimeSinceGo', time_since_go_time)
 
