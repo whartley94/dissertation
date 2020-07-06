@@ -57,13 +57,13 @@
 # #SBATCH --exclude=charles[05,12-18]
 
 # Request a node
-# #SBATCH --nodelist=damnii07
+#SBATCH --nodelist=damnii03
 
 
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=wholeinet
+MODEL_NAME=wholeinetrun
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"

@@ -57,7 +57,7 @@
 # #SBATCH --exclude=charles[05,12-18]
 
 # Request a node
-# #SBATCH --nodelist=damnii07
+#SBATCH --nodelist=damnii07
 
 
 # =====================
