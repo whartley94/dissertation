@@ -39,5 +39,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--plot_data_gen', action='store_true', help='Plot data as its generated')
         parser.add_argument('--save_optimizer', action='store_true', help='Save optimiser states when saving model')
         parser.add_argument('--bin_variation', action='store_true', help='Provide nearest colour bin for each user hint')
+        parser.add_argument('--size_points', action='store_true', help='Do points by their circular size')
         self.isTrain = True
         return parser

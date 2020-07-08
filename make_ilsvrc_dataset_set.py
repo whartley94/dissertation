@@ -42,8 +42,8 @@ print('Making small training set in...[%s]'%trn_small_path)
 # print('Making training set in...[%s]'%trn_path)
 
 
-# Copy over part of training set (for initializer)
-trn_path = os.path.join(opt.out_path,'train')
+# Copy over  training set
+trn_path = os.path.join(opt.out_path, 'train')
 if os.path.isdir(trn_path):
 	try:
 		os.unlink(trn_path)

@@ -28,7 +28,9 @@ if __name__ == '__main__':
     opt.batch_size = 1  # test code only supports batch_size = 1
     opt.display_id = -1  # no visdom display
     opt.phase = 'test'
-    opt.dataroot = './dataset/ilsvrc2012/%s/' % opt.phase
+    # opt.dataroot = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/dataset/SUN2012/%s/' % opt.phase
+    opt.dataroot = os.path.join(opt.data_dir, opt.phase)
+    # opt.dataroot = './dataset/ilsvrc2012/%s/' % opt.phase
     opt.loadSize = 256
     opt.how_many = 1000
     opt.aspect_ratio = 1.0
@@ -53,14 +55,18 @@ if __name__ == '__main__':
 
     time = dt.datetime.now()
     str_now = '%02d_%02d_%02d%02d' % (time.month, time.day, time.hour, time.minute)
-
-    shutil.copyfile('./checkpoints/%s/latest_net_G.pth' % opt.name, './checkpoints/%s/%s_net_G.pth' % (opt.name, str_now))
+    model_path = os.path.join(opt.checkpoints_dir, '%s/latest_net_G.pth' % opt.name)
+    model_backup_path =  os.path.join(opt.checkpoints_dir, '%s/%s_net_G.pth' % (opt.name, str_now))
+    # print('mp', model_path)
+    # print('./checkpoints/%s/latest_net_G.pth' % opt.name)
+    shutil.copyfile(model_path, model_backup_path)
 
     psnrs = np.zeros((opt.how_many, N))
 
     bar = pb.ProgressBar(max_value=opt.how_many)
     for i, data_raw in enumerate(dataset_loader):
-        data_raw[0] = data_raw[0].cuda()
+        if len(opt.gpu_ids) > 0:
+            data_raw[0] = data_raw[0].cuda()
         data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
         for nn in range(N):
@@ -82,12 +88,13 @@ if __name__ == '__main__':
     psnrs_mean = np.mean(psnrs, axis=0)
     psnrs_std = np.std(psnrs, axis=0) / np.sqrt(opt.how_many)
 
-    np.save('./checkpoints/%s/psnrs_mean_%s' % (opt.name,str_now), psnrs_mean)
-    np.save('./checkpoints/%s/psnrs_std_%s' % (opt.name,str_now), psnrs_std)
-    np.save('./checkpoints/%s/psnrs_%s' % (opt.name,str_now), psnrs)
+    # save_cpoint_dir = os.path.join(opt.checkpoints_dir, '%s/psnrs_mean_%s' % (opt.name,str_now))
+    np.save('%s%s/psnrs_mean_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_mean)
+    np.save('%s%s/psnrs_std_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_std)
+    np.save('%s%s/psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
     print(', ').join(['%.2f' % psnr for psnr in psnrs_mean])
 
-    old_results = np.load('./resources/psnrs_siggraph.npy')
+    old_results = np.load('%s/psnrs_siggraph.npy' % opt.resources_dir)
     old_mean = np.mean(old_results, axis=0)
     old_std = np.std(old_results, axis=0) / np.sqrt(old_results.shape[0])
     print(', ').join(['%.2f' % psnr for psnr in old_mean])
@@ -109,4 +116,4 @@ if __name__ == '__main__':
     plt.ylabel('PSNR [db]')
     plt.legend(loc=0)
     plt.xlim((num_points_hack[0], num_points_hack[-1]))
-    plt.savefig('./checkpoints/%s/sweep_%s.png' % (opt.name,str_now))
+    plt.savefig('%s%s/sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))

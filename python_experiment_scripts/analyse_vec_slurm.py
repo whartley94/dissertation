@@ -264,7 +264,8 @@ def plot_batch_gpu_loss():
 if __name__ == '__main__':
 
     slurm_log_dir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/slurm_logs'
-    slurm_dirs = get_logs(slurm_exp=['955987','956170', '956271', '957776'])
+    # slurm_dirs = get_logs(slurm_exp=['955987','956170', '956271', '958515'])
+    slurm_dirs = get_logs(slurm_exp=['959032'])
     print(slurm_dirs)
 
     # Get the epoch times but without worrying about producing a numpy array with fixed shape.

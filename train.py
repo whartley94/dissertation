@@ -10,6 +10,9 @@ import os
 
 from util import util
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 if __name__ == '__main__':
     print('Python Starting Script')
     opt = TrainOptions().parse()
