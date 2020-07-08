@@ -18,7 +18,7 @@ cpoint_path = f'{SCRATCH_HOME}/checkpoints'
 
 base_call = f"python train.py --sample_p .125 --niter_decay 0 --display_id -1 " \
     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train_partition " \
-    f"--batch_size 58 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.000001 --weighted_mask --save_optimizer --bin_variation"
+    f"--batch_size 120 --gpu_ids 0,1,2,3,4,5,6,7 --lr 0.000001 --weighted_mask --save_optimizer --bin_variation"
 # base_call2 = f"python train.py --name Auto --sample_p .125 --niter 20 --niter_decay 0 --lr 0.00001 --display_id -1 " \
 #     f"--data_dir {sorted_path} --checkpoints_dir {cpoint_path} --phase train --load_sg_model"
 
