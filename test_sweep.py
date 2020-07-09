@@ -92,12 +92,15 @@ if __name__ == '__main__':
     np.save('%s%s/psnrs_mean_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_mean)
     np.save('%s%s/psnrs_std_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_std)
     np.save('%s%s/psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
-    print(', ').join(['%.2f' % psnr for psnr in psnrs_mean])
+    psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
+    print('PSNR Means: ', psnrmeans)
 
     old_results = np.load('%s/psnrs_siggraph.npy' % opt.resources_dir)
     old_mean = np.mean(old_results, axis=0)
     old_std = np.std(old_results, axis=0) / np.sqrt(old_results.shape[0])
-    print(', ').join(['%.2f' % psnr for psnr in old_mean])
+    oldmeans = ['%.2f' % psnr for psnr in old_mean]
+    print('Old PSNR Means: ', oldmeans)
+
 
     num_points_hack = 1. * num_points
     num_points_hack[0] = .4

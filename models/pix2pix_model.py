@@ -118,6 +118,7 @@ class Pix2PixModel(BaseModel):
         self.real_B_enc = util.encode_ab_ind(self.real_B[:, :, ::4, ::4], self.opt)
 
     def forward(self):
+        # print('mask_b', self.mask_B[self.mask_B>0.5])
         (self.fake_B_class, self.fake_B_reg) = self.netG(self.real_A, self.hint_B, self.mask_B)
         # if(self.opt.classification):
 
