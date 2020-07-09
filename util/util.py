@@ -652,7 +652,10 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                     data['mask_B'][nn, :, center_h, center_w-1] = weight1 + opt.mask_cent
                     data['mask_B'][nn, :, center_h, center_w] = 0
                 else:
-                    data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                    if opt.continuous_mask:
+                        data['mask_B'][nn, :, center_h, center_w] = weight1 + 0.001
+                    else:
+                        data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
 
                 # increment counter
                 pp+=1
@@ -1374,6 +1377,8 @@ def plot_data(data, opt):
         if opt.weighted_mask or opt.size_points:
             if opt.bin_variation:
                 im3 = ax3.imshow(mask_im, vmin=-1, vmax=1)
+            elif opt.continuous_mask:
+                im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
             else:
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=1)
         fig.colorbar(im3, ax=ax3)
