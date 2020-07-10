@@ -557,7 +557,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
     data['hint_B'] = torch.zeros_like(data['B'])
     data['mask_B'] = torch.zeros_like(data['A'])
-    if opt.bin_variation:
+    if opt.bin_variation or opt.spread_mask:
         data['mask_B'] -= 0.5
 
     for nn in range(N):
@@ -1348,7 +1348,7 @@ def plot_data(data, opt):
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
         if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation:
+            if opt.bin_variation or opt.spread_mask:
                 hint_im[mask_im == -1] = 0
             else:
                 hint_im[mask_im==-0.5] = 0
@@ -1375,7 +1375,7 @@ def plot_data(data, opt):
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
             ax5.imshow(labels, cmap=cmap)
         if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation:
+            if opt.bin_variation or opt.spread_mask:
                 im3 = ax3.imshow(mask_im, vmin=-1, vmax=1)
             elif opt.continuous_mask:
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
