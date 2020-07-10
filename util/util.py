@@ -604,7 +604,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                 if len(np.unique(labels[h:h+P, w:w+P])) == 1:
                     no_unique = False
                 loop_cont += 1
-                if loop_cont > 10:
+                if loop_cont > 35:
                     break
 
             # add color point
@@ -658,7 +658,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                         data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
 
                 # increment counter
-                pp+=1
+            pp+=1
 
     data['mask_B']-=opt.mask_cent
     return data
