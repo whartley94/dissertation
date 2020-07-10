@@ -1,3 +1,6 @@
+# python test_sweep.py --gpu_ids -1 --name siggraph_retrained --data_dir /Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/dataset/SUN2012/ --checkpoints_dir /Users/Will/Documents/Uni/MscEdinburgh/Diss/checkpoints_from_pd/
+
+
 import os
 from options.train_options import TrainOptions
 from data import CreateDataLoader
@@ -43,57 +46,68 @@ if __name__ == '__main__':
     num_points = np.unique(num_points.astype('int'))
     N = len(num_points)
 
-    dataset = torchvision.datasets.ImageFolder(opt.dataroot,
-                                               transform=transforms.Compose([
-                                                   transforms.Resize((opt.loadSize, opt.loadSize)),
-                                                   transforms.ToTensor()]))
-    dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
-    model = create_model(opt)
-    model.setup(opt)
-    model.eval()
+    if not opt.load_sweep:
+        dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+                                                   transform=transforms.Compose([
+                                                       transforms.Resize((opt.loadSize, opt.loadSize)),
+                                                       transforms.ToTensor()]))
+        dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
-    time = dt.datetime.now()
-    str_now = '%02d_%02d_%02d%02d' % (time.month, time.day, time.hour, time.minute)
-    model_path = os.path.join(opt.checkpoints_dir, '%s/latest_net_G.pth' % opt.name)
-    model_backup_path =  os.path.join(opt.checkpoints_dir, '%s/%s_net_G.pth' % (opt.name, str_now))
-    # print('mp', model_path)
-    # print('./checkpoints/%s/latest_net_G.pth' % opt.name)
-    shutil.copyfile(model_path, model_backup_path)
+        model = create_model(opt)
+        model.setup(opt)
+        model.eval()
 
-    psnrs = np.zeros((opt.how_many, N))
+        time = dt.datetime.now()
+        str_now = '%02d_%02d_%02d%02d' % (time.month, time.day, time.hour, time.minute)
+        model_path = os.path.join(opt.checkpoints_dir, '%s/latest_net_G.pth' % opt.name)
+        model_backup_path =  os.path.join(opt.checkpoints_dir, '%s/%s_net_G.pth' % (opt.name, str_now))
+        # print('mp', model_path)
+        # print('./checkpoints/%s/latest_net_G.pth' % opt.name)
+        shutil.copyfile(model_path, model_backup_path)
 
-    bar = pb.ProgressBar(max_value=opt.how_many)
-    for i, data_raw in enumerate(dataset_loader):
-        if len(opt.gpu_ids) > 0:
-            data_raw[0] = data_raw[0].cuda()
-        data_raw[0] = util.crop_mult(data_raw[0], mult=8)
+        psnrs = np.zeros((opt.how_many, N))
 
-        for nn in range(N):
-            # embed()
-            data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=num_points[nn])
+        bar = pb.ProgressBar(max_value=opt.how_many)
+        for i, data_raw in enumerate(dataset_loader):
+            if len(opt.gpu_ids) > 0:
+                data_raw[0] = data_raw[0].cuda()
+            data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
-            model.set_input(data)
-            model.test()
-            visuals = model.get_current_visuals()
+            for nn in range(N):
+                # embed()
+                data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=num_points[nn])
 
-            psnrs[i, nn] = util.calculate_psnr_np(util.tensor2im(visuals['real']), util.tensor2im(visuals['fake_reg']))
+                model.set_input(data)
+                model.test()
+                visuals = model.get_current_visuals()
 
-        if i == opt.how_many - 1:
-            break
+                psnrs[i, nn] = util.calculate_psnr_np(util.tensor2im(visuals['real']), util.tensor2im(visuals['fake_reg']))
 
-        bar.update(i)
+            if i == opt.how_many - 1:
+                break
 
-    # Save results
-    psnrs_mean = np.mean(psnrs, axis=0)
-    psnrs_std = np.std(psnrs, axis=0) / np.sqrt(opt.how_many)
+            bar.update(i)
 
-    # save_cpoint_dir = os.path.join(opt.checkpoints_dir, '%s/psnrs_mean_%s' % (opt.name,str_now))
-    np.save('%s%s/psnrs_mean_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_mean)
-    np.save('%s%s/psnrs_std_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_std)
-    np.save('%s%s/psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
-    psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
-    print('PSNR Means: ', psnrmeans)
+        # Save results
+        psnrs_mean = np.mean(psnrs, axis=0)
+        psnrs_std = np.std(psnrs, axis=0) / np.sqrt(opt.how_many)
+
+        # save_cpoint_dir = os.path.join(opt.checkpoints_dir, '%s/psnrs_mean_%s' % (opt.name,str_now))
+        np.save('%s%s/psnrs_mean_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_mean)
+        np.save('%s%s/psnrs_std_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_std)
+        np.save('%s%s/psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
+        psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
+        print('PSNR Means: ', psnrmeans)
+
+    else:
+        str_now = '%02d_%02d_%02d%02d' % (7, 9, 12, 33)
+        psnrs_mean = np.load('%s%s/psnrs_mean_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
+        psnrs_std = np.load('%s%s/psnrs_std_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
+        psnrs = np.load('%s%s/psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
+        psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
+        print('PSNR Means: ', psnrmeans)
+
 
     old_results = np.load('%s/psnrs_siggraph.npy' % opt.resources_dir)
     old_mean = np.mean(old_results, axis=0)

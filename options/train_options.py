@@ -41,5 +41,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--bin_variation', action='store_true', help='Provide nearest colour bin for each user hint')
         parser.add_argument('--size_points', action='store_true', help='Do points by their circular size')
         parser.add_argument('--continuous_mask', action='store_true', help='Mask weights end at -0.5 with no gap')
+        parser.add_argument('--load_sweep', action='store_true', help='Just load previous sweep rather than running')
         self.isTrain = True
         return parser
