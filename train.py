@@ -2,6 +2,7 @@ import time
 from options.train_options import TrainOptions
 from models import create_model
 from util.visualizer import Visualizer
+import numpy as np
 
 import torch
 import torchvision
@@ -12,6 +13,7 @@ from util import util
 
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 
 if __name__ == '__main__':
     print('Python Starting Script')
@@ -54,8 +56,6 @@ if __name__ == '__main__':
             else:
                 opt.name = name
     print('Experiment Name: ', opt.name)
-
-
     dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                transform=transforms.Compose([
                                                    transforms.RandomChoice([transforms.Resize(opt.loadSize, interpolation=1),

@@ -62,6 +62,10 @@ if __name__ == '__main__':
     names.append('siggraph_caffemodel')
     strings.append('%02d_%02d_%02d%02d' % (7, 9, 10, 9))
     colors.append('g')
+    names.append('wholeinet')
+    strings.append('%02d_%02d_%02d%02d' % (7, 10, 14, 33))
+    colors.append('c')
+
 
 
     for i in range(len(strings)):
