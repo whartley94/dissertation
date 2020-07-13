@@ -52,7 +52,6 @@ class BaseOptions():
         parser.add_argument('--mask_cent', type=float, default=.5, help='mask centering factor')
         parser.add_argument('--sample_p', type=float, default=1.0, help='sampling geometric distribution, 1.0 means no hints')
         parser.add_argument('--sample_Ps', type=int, nargs='+', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, ], help='patch sizes')
-
         parser.add_argument('--results_dir', type=str, default='./results/', help='saves results here.')
         parser.add_argument('--classification', action='store_true', help='backprop trunk using classification, otherwise use regression')
         parser.add_argument('--phase', type=str, default='val', help='train_small, train, val, test, etc')

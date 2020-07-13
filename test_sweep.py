@@ -7,6 +7,7 @@ from data import CreateDataLoader
 from models import create_model
 from util.visualizer import save_images
 from util import html
+import random
 
 import torch
 import torchvision
@@ -25,8 +26,6 @@ import datetime as dt
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    # np.random.seed(0)
-    # torch.manual_seed(0)
 
     opt = TrainOptions().parse()
     opt.load_model = True
@@ -42,6 +41,10 @@ if __name__ == '__main__':
     opt.aspect_ratio = 1.0
     opt.sample_Ps = [6,]
     opt.load_model = True
+    # if opt.plot_data_gen:
+        # np.random.seed(5)
+        # torch.manual_seed(5)
+        # random.seed(5)
 
     # number of random points to assign
     num_points = np.round(10**np.arange(-.1, 2.8, .1))
@@ -51,29 +54,29 @@ if __name__ == '__main__':
 
 
     if not opt.load_sweep:
-        # dataset = torchvision.datasets.ImageFolder(opt.dataroot,
-        #                                            transform=transforms.Compose([
-        #                                                transforms.Resize((opt.loadSize, opt.loadSize)),
-        #                                                transforms.ToTensor()]))
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                    transform=transforms.Compose([
-                                                       transforms.RandomChoice(
-                                                           [transforms.Resize(opt.loadSize, interpolation=1),
-                                                            transforms.Resize(opt.loadSize, interpolation=2),
-                                                            transforms.Resize(opt.loadSize, interpolation=3),
-                                                            transforms.Resize((opt.loadSize, opt.loadSize),
-                                                                              interpolation=1),
-                                                            transforms.Resize((opt.loadSize, opt.loadSize),
-                                                                              interpolation=2),
-                                                            transforms.Resize((opt.loadSize, opt.loadSize),
-                                                                              interpolation=3)]),
-                                                       transforms.RandomChoice(
-                                                           [transforms.RandomResizedCrop(opt.fineSize, interpolation=1),
-                                                            transforms.RandomResizedCrop(opt.fineSize, interpolation=2),
-                                                            transforms.RandomResizedCrop(opt.fineSize,
-                                                                                         interpolation=3)]),
-                                                       transforms.RandomHorizontalFlip(),
+                                                       transforms.Resize((opt.loadSize, opt.loadSize)),
                                                        transforms.ToTensor()]))
+        # dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+        #                                            transform=transforms.Compose([
+        #                                                transforms.RandomChoice(
+        #                                                    [transforms.Resize(opt.loadSize, interpolation=1),
+        #                                                     transforms.Resize(opt.loadSize, interpolation=2),
+        #                                                     transforms.Resize(opt.loadSize, interpolation=3),
+        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
+        #                                                                       interpolation=1),
+        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
+        #                                                                       interpolation=2),
+        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
+        #                                                                       interpolation=3)]),
+        #                                                transforms.RandomChoice(
+        #                                                    [transforms.RandomResizedCrop(opt.fineSize, interpolation=1),
+        #                                                     transforms.RandomResizedCrop(opt.fineSize, interpolation=2),
+        #                                                     transforms.RandomResizedCrop(opt.fineSize,
+        #                                                                                  interpolation=3)]),
+        #                                                transforms.RandomHorizontalFlip(),
+        #                                                transforms.ToTensor()]))
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
         model = create_model(opt)
@@ -100,8 +103,6 @@ if __name__ == '__main__':
                 # embed()
                 data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=num_points[nn])
 
-                # util.plot_data(data, opt)
-
 
                 model.set_input(data)
                 model.test()
@@ -109,14 +110,13 @@ if __name__ == '__main__':
 
                 real = util.tensor2im(visuals['real'])
                 fake_reg = util.tensor2im(visuals['fake_reg'])
-                # print('nn', nn)
-                # plt.imshow(real)
-                # plt.show()
-                # plt.imshow(fake_reg)
-                # plt.show()
+                if opt.plot_data_gen:
+                    util.plot_data_results(data, real, fake_reg, opt)
+                    print('nn', nn)
 
                 psnrsz = util.calculate_psnr_np(real, fake_reg)
-                # print(psnrsz)
+                if opt.plot_data_gen:
+                    print(psnrsz)
                 psnrs[i, nn] = psnrsz
 
             if i == opt.how_many - 1:

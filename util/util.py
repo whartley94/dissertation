@@ -570,6 +570,7 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
         labels, num_labels = bins_scimage_group_minimal(ab_bins)
         # print('Extracted', nn/N)
 
+        p = np.random.choice(opt.pss)
 
         pp = 0
         cont_cond = True
@@ -587,8 +588,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                     opt.sample_Ps.remove(1)
                 if 2 in opt.sample_Ps:
                     opt.sample_Ps.remove(2)
-            P = np.random.choice(opt.sample_Ps) # patch size
             # P = 1
+            P = np.random.choice(opt.sample_Ps) # patch size
 
             no_unique = True
             loop_cont = 0
@@ -621,7 +622,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
             if len(unique_bins) == 1:
                 num_same_bin = len(labels[labels==unique_bins[0]])
-                weight1 = float(num_same_bin/(opt.fineSize**2))
+                total_size = data['A'].shape[2] * data['B'].shape[3]
+                weight1 = float(num_same_bin/(total_size))
                 # print(weight1)
 
                 center_h = int(h + (P/2))
@@ -1383,6 +1385,71 @@ def plot_data(data, opt):
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=1)
         fig.colorbar(im3, ax=ax3)
         ax4.imshow(hint_im)
+
+        ax1.set_title('Original')
+        ax2.set_title('ab Channels')
+        ax3.set_title('Weighted Mask')
+        ax4.set_title('Colour Hints')
+        ax5.set_title('Labels')
+        plt.tight_layout()
+        plt.show()
+
+
+def plot_data_results(data, real, fake_reg, opt):
+    for nn in range(data['B'].shape[0]):
+        # print(data.keys())
+        lab_ims = lab2rgb(data['lab'][:, :, :, :], opt)
+        lab_im = tensor2im(lab_ims[nn])
+        rgb_im = tensor2im(data['abRgb'][nn, :, :, :])
+        mask = data['mask_B'][nn, 0, :, :]
+        mask_im = np.asarray(mask)
+        # mask_im = np.transpose(mask_im, (1, 2, 0))
+        hint = data['hint_B'][nn, :, :, :]
+        hint_lab = torch.zeros(1, 3, mask_im.shape[0], mask_im.shape[1])
+        hint_lab[0, 0, :, :] = 0.3
+        hint_lab[0, 1, :, :]  = hint[0, :, :]
+        hint_lab[0, 2, :, :]  = hint[1, :, :]
+        hint_rgb = lab2rgb(hint_lab, opt)
+        hint_im = tensor2im(hint_rgb)
+        if opt.weighted_mask or opt.size_points:
+            if opt.bin_variation or opt.spread_mask:
+                hint_im[mask_im == -1] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
+        if opt.bb_mask or opt.pr_mask:
+            if opt.bin_variation:
+                hint_im[mask_im == -0.75] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
+
+        if opt.bb_mask or opt.pr_mask:
+            labels = data['labels'][nn, 0, :, :]
+
+
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(14, 3.5))
+        # fx_image = util.tensor2im(rgb_img)
+        # cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+        c = ax1.imshow(lab_im)
+        ax2.imshow(fake_reg)
+        ax3.imshow(rgb_im)
+        if opt.bb_mask or opt.pr_mask:
+            if opt.bin_variation:
+                im4 = ax4.imshow(mask_im, vmin=-0.75, vmax=0.75)
+            else:
+                im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
+            # ax5.imshow(labels, cmap=cmap)
+        if opt.weighted_mask or opt.size_points:
+            if opt.bin_variation or opt.spread_mask:
+                im4 = ax4.imshow(mask_im, vmin=-1, vmax=1)
+            elif opt.continuous_mask:
+                im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
+            else:
+                im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=1)
+        fig.colorbar(im4, ax=ax4)
+        ax5.imshow(hint_im)
+        # ax5.imshow(real)
+        # ax6.imshow(fake_reg)
 
         ax1.set_title('Original')
         ax2.set_title('ab Channels')

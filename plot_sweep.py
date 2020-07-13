@@ -40,6 +40,8 @@ if __name__ == '__main__':
     opt.how_many = 1000
     opt.aspect_ratio = 1.0
     opt.sample_Ps = [6,]
+    # opt.sample_Ps = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                     # 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, ]
     opt.load_model = True
 
     # number of random points to assign
@@ -56,12 +58,12 @@ if __name__ == '__main__':
     names = []
     strings = []
     colors = []
-    names.append('siggraph_retrained')
-    strings.append('%02d_%02d_%02d%02d' % (7, 9, 12, 33))
-    colors.append('b')
-    names.append('siggraph_caffemodel')
-    strings.append('%02d_%02d_%02d%02d' % (7, 9, 10, 9))
-    colors.append('g')
+    # names.append('siggraph_retrained')
+    # strings.append('%02d_%02d_%02d%02d' % (7, 9, 12, 33))
+    # colors.append('b')
+    # names.append('siggraph_caffemodel')
+    # strings.append('%02d_%02d_%02d%02d' % (7, 9, 10, 9))
+    # colors.append('g')
     names.append('wholeinet')
     strings.append('%02d_%02d_%02d%02d' % (7, 10, 14, 33))
     colors.append('c')
@@ -89,9 +91,9 @@ if __name__ == '__main__':
 
 
 
-    plt.plot(num_points_hack, old_mean, 'ro-', label='siggraph17')
-    plt.plot(num_points_hack, old_mean + old_std, 'r--')
-    plt.plot(num_points_hack, old_mean - old_std, 'r--')
+    # plt.plot(num_points_hack, old_mean, 'ro-', label='siggraph17')
+    # plt.plot(num_points_hack, old_mean + old_std, 'r--')
+    # plt.plot(num_points_hack, old_mean - old_std, 'r--')
 
     plt.xscale('log')
     plt.xticks([.4,1,2,5,10,20,50,100,200,500],

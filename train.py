@@ -93,6 +93,16 @@ if __name__ == '__main__':
     time_since_go_time = time.time() - go_time
     print('TimeSinceGo', time_since_go_time)
 
+    if opt.weighted_mask:
+        opt.sample_Ps = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, ]
+        opt.pss = np.zeros((100))
+        opt.pss += 0.125
+        opt.pss[:10] = 0.1
+        opt.pss[10:15] = 0.01
+        opt.pss[15:17] = 0.001
+        opt.pss[17:18] = 0.0001
+
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay):
         print('StartingEpoch')
         epoch_start_time = time.time()
