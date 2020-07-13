@@ -93,6 +93,10 @@ if __name__ == '__main__':
 
         psnrs = np.zeros((opt.how_many, N))
 
+        if opt.weighted_mask:
+            opt.sample_Ps = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                             2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, ]
+
         bar = pb.ProgressBar(max_value=opt.how_many)
         for i, data_raw in enumerate(dataset_loader):
             if len(opt.gpu_ids) > 0:

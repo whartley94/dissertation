@@ -67,6 +67,10 @@ if __name__ == '__main__':
     names.append('wholeinet')
     strings.append('%02d_%02d_%02d%02d' % (7, 10, 14, 33))
     colors.append('c')
+    names.append('wholeinet')
+    strings.append('%02d_%02d_%02d%02d' % (7, 13, 15, 24))
+    colors.append('y')
+
 
 
 
@@ -91,9 +95,9 @@ if __name__ == '__main__':
 
 
 
-    # plt.plot(num_points_hack, old_mean, 'ro-', label='siggraph17')
-    # plt.plot(num_points_hack, old_mean + old_std, 'r--')
-    # plt.plot(num_points_hack, old_mean - old_std, 'r--')
+    plt.plot(num_points_hack, old_mean, 'ro-', label='siggraph17')
+    plt.plot(num_points_hack, old_mean + old_std, 'r--')
+    plt.plot(num_points_hack, old_mean - old_std, 'r--')
 
     plt.xscale('log')
     plt.xticks([.4,1,2,5,10,20,50,100,200,500],

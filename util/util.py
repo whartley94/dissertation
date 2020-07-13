@@ -569,8 +569,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
         # labels = dbscan_encoded_indexed(ab_bins)
         labels, num_labels = bins_scimage_group_minimal(ab_bins)
         # print('Extracted', nn/N)
-
-        p = np.random.choice(opt.pss)
+        if opt.pss is not None:
+            p = np.random.choice(opt.pss)
 
         pp = 0
         cont_cond = True
