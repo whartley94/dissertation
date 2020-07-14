@@ -79,6 +79,7 @@ if __name__ == '__main__':
         psnrs_mean = np.load('%s%s/psnrs_mean_%s.npy' % (opt.checkpoints_dir, names[i], strings[i]))
         psnrs_std = np.load('%s%s/psnrs_std_%s.npy' % (opt.checkpoints_dir, names[i],strings[i]))
         psnrs = np.load('%s%s/psnrs_%s.npy' % (opt.checkpoints_dir, names[i],strings[i]))
+        print(psnrs[psnrs ==0])
         psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
         print('PSNR Means: ', psnrmeans)
 

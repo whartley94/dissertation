@@ -54,29 +54,31 @@ if __name__ == '__main__':
 
 
     if not opt.load_sweep:
-        dataset = torchvision.datasets.ImageFolder(opt.dataroot,
-                                                   transform=transforms.Compose([
-                                                       transforms.Resize((opt.loadSize, opt.loadSize)),
-                                                       transforms.ToTensor()]))
-        # dataset = torchvision.datasets.ImageFolder(opt.dataroot,
-        #                                            transform=transforms.Compose([
-        #                                                transforms.RandomChoice(
-        #                                                    [transforms.Resize(opt.loadSize, interpolation=1),
-        #                                                     transforms.Resize(opt.loadSize, interpolation=2),
-        #                                                     transforms.Resize(opt.loadSize, interpolation=3),
-        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
-        #                                                                       interpolation=1),
-        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
-        #                                                                       interpolation=2),
-        #                                                     transforms.Resize((opt.loadSize, opt.loadSize),
-        #                                                                       interpolation=3)]),
-        #                                                transforms.RandomChoice(
-        #                                                    [transforms.RandomResizedCrop(opt.fineSize, interpolation=1),
-        #                                                     transforms.RandomResizedCrop(opt.fineSize, interpolation=2),
-        #                                                     transforms.RandomResizedCrop(opt.fineSize,
-        #                                                                                  interpolation=3)]),
-        #                                                transforms.RandomHorizontalFlip(),
-        #                                                transforms.ToTensor()]))
+        if opt.resize_test:
+            dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+                                                       transform=transforms.Compose([
+                                                           transforms.RandomChoice(
+                                                               [transforms.Resize(opt.loadSize, interpolation=1),
+                                                                transforms.Resize(opt.loadSize, interpolation=2),
+                                                                transforms.Resize(opt.loadSize, interpolation=3),
+                                                                transforms.Resize((opt.loadSize, opt.loadSize),
+                                                                                  interpolation=1),
+                                                                transforms.Resize((opt.loadSize, opt.loadSize),
+                                                                                  interpolation=2),
+                                                                transforms.Resize((opt.loadSize, opt.loadSize),
+                                                                                  interpolation=3)]),
+                                                           transforms.RandomChoice(
+                                                               [transforms.RandomResizedCrop(opt.fineSize, interpolation=1),
+                                                                transforms.RandomResizedCrop(opt.fineSize, interpolation=2),
+                                                                transforms.RandomResizedCrop(opt.fineSize,
+                                                                                             interpolation=3)]),
+                                                           transforms.RandomHorizontalFlip(),
+                                                           transforms.ToTensor()]))
+        else:
+            dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+                                                       transform=transforms.Compose([
+                                                           transforms.Resize((opt.loadSize, opt.loadSize)),
+                                                           transforms.ToTensor()]))
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=not opt.serial_batches)
 
         model = create_model(opt)

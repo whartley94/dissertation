@@ -44,5 +44,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--load_sweep', action='store_true', help='Just load previous sweep rather than running')
         parser.add_argument('--spread_mask', action='store_true', help='Put mask min lower')
         parser.add_argument('--pss', type=list, default=None, help='List of p values to randomly chose from')
+        parser.add_argument('--resize_test', action='store_true', help='Which test sweep to use')
         self.isTrain = True
         return parser
