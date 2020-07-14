@@ -115,6 +115,7 @@ if __name__ == '__main__':
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
+            print(data_raw)
             time_since_go_time = time.time() - go_time
             # print('TimeSince Go Time', time_since_go_time)
             if time_since_go_time > max_time:

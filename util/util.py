@@ -1452,9 +1452,9 @@ def plot_data_results(data, real, fake_reg, opt):
         # ax6.imshow(fake_reg)
 
         ax1.set_title('Original')
-        ax2.set_title('ab Channels')
-        ax3.set_title('Weighted Mask')
-        ax4.set_title('Colour Hints')
-        ax5.set_title('Labels')
+        ax2.set_title('Results')
+        ax3.set_title('Original ab')
+        ax4.set_title('Weighted Mask')
+        ax5.set_title('Colour Hints')
         plt.tight_layout()
         plt.show()
