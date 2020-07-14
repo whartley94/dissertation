@@ -453,7 +453,7 @@ def lab2rgb(lab_rs, opt):
         # embed()
     return out
 
-def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
+def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None, randomise_mask_weights=0):
     data = {}
 
     data_lab = rgb2lab(data_raw[0], opt)
@@ -480,7 +480,8 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None):
             return None
 
     if opt.weighted_mask:
-        return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
+        return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform',
+                                           randomise_mask_weighs=randomise_mask_weights)
     elif opt.bb_mask:
         return add_bb_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
     elif opt.size_points:
@@ -544,7 +545,7 @@ def add_color_patches_rand_gt(data,opt,p=.125,num_points=None,use_avg=True,samp=
     return data
 
 
-def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal'):
+def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal',randomise_mask_weighs=0):
 # Add random color points sampled from ground truth based on:
 #   Number of points
 #   - if num_points is 0, then sample from geometric distribution, drawn from probability p
@@ -574,6 +575,10 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
 
         pp = 0
         cont_cond = True
+
+        if randomise_mask_weighs != 0:
+            bin_shift_dic = {}
+
         while(cont_cond):
             if(num_points is None): # draw from geometric
                 # embed()
@@ -621,6 +626,10 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
             unique_bins = np.unique(labels[h:h+P, w:w+P])
 
             if len(unique_bins) == 1:
+                if randomise_mask_weighs != 0:
+                    if not bin_shift_dic.get(unique_bins[0]):
+                        bin_shift_dic[unique_bins[0]] = np.random.uniform(-randomise_mask_weighs, randomise_mask_weighs)
+
                 num_same_bin = len(labels[labels==unique_bins[0]])
                 total_size = data['A'].shape[2] * data['B'].shape[3]
                 weight1 = float(num_same_bin/(total_size))
@@ -657,7 +666,16 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
                     if opt.continuous_mask:
                         data['mask_B'][nn, :, center_h, center_w] = weight1 + 0.001
                     else:
-                        data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                        if randomise_mask_weighs == 0:
+                            data['mask_B'][nn,:,center_h,center_w] = weight1 + opt.mask_cent
+                        else:
+                            shift = bin_shift_dic.get(unique_bins[0])
+                            # print(shift)
+                            weight2 = weight1 + shift
+                            weight2 = np.clip(weight2, -0.5, 1)
+                            data['mask_B'][nn, :, center_h, center_w] = weight2 + opt.mask_cent
+
+
 
                 # increment counter
             pp+=1
