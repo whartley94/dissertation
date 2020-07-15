@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # num_points = np.unique(num_points.astype('int'))
     # N = len(num_points)
     num_points = 20
-    randomisers = np.linspace(0, 0.8, 20)
+    randomisers = np.linspace(0, 0.45, 40)
     randomisers_l = len(randomisers)
 
     if not opt.load_sweep:
