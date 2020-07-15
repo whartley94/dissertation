@@ -41,10 +41,10 @@ if __name__ == '__main__':
     opt.aspect_ratio = 1.0
     opt.sample_Ps = [6,]
     opt.load_model = True
-    # if opt.plot_data_gen:
-        # np.random.seed(5)
-        # torch.manual_seed(5)
-        # random.seed(5)
+    if opt.plot_data_gen:
+        np.random.seed(5)
+        torch.manual_seed(5)
+        random.seed(5)
 
     # number of random points to assign
     num_points = np.round(10**np.arange(-.1, 2.8, .1))
@@ -73,6 +73,11 @@ if __name__ == '__main__':
                                                                 transforms.RandomResizedCrop(opt.fineSize,
                                                                                              interpolation=3)]),
                                                            transforms.RandomHorizontalFlip(),
+                                                           transforms.ToTensor()]))
+        elif opt.use_finesize:
+            dataset = torchvision.datasets.ImageFolder(opt.dataroot,
+                                                       transform=transforms.Compose([
+                                                           transforms.Resize((opt.fineSize, opt.fineSize)),
                                                            transforms.ToTensor()]))
         else:
             dataset = torchvision.datasets.ImageFolder(opt.dataroot,

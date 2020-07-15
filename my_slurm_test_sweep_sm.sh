@@ -124,11 +124,14 @@ python make_ilsvrc_dataset_with_val.py --in_path ${dest_path} --out_path ${sorte
 # ==============================
 # Finally, run the experiment!
 # ==============================
+#echo "Starting python call"
+#python test_sweep.py --gpu_ids 0 --name ${MODEL_NAME} --data_dir ${sorted_path} --checkpoints_dir ${cpoint_dir} --resources_dir ${resource_path} --weighted_mask --spread_mask
+#echo "Python ended"
+#echo "Starting python call"
+#python test_sweep.py --gpu_ids 0 --name ${MODEL_NAME} --data_dir ${sorted_path} --checkpoints_dir ${cpoint_dir} --resources_dir ${resource_path} --weighted_mask --spread_mask --resize_test
+#echo "Python ended"
 echo "Starting python call"
-python test_sweep.py --gpu_ids 0 --name ${MODEL_NAME} --data_dir ${sorted_path} --checkpoints_dir ${cpoint_dir} --resources_dir ${resource_path} --weighted_mask --spread_mask
-echo "Python ended"
-echo "Starting python call"
-python test_sweep.py --gpu_ids 0 --name ${MODEL_NAME} --data_dir ${sorted_path} --checkpoints_dir ${cpoint_dir} --resources_dir ${resource_path} --weighted_mask --spread_mask --resize_test
+python test_sweep.py --gpu_ids 0 --name ${MODEL_NAME} --data_dir ${sorted_path} --checkpoints_dir ${cpoint_dir} --resources_dir ${resource_path} --weighted_mask --spread_mask --use_finesize
 echo "Python ended"
 
 # ======================================
