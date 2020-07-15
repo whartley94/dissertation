@@ -58,7 +58,7 @@ if __name__ == '__main__':
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
                                                    transform=transforms.Compose([
-                                                       transforms.Resize((opt.loadSize, opt.loadSize)),
+                                                       transforms.Resize((opt.fineSize, opt.fineSize)),
                                                        transforms.ToTensor()]))
         # dataset = torchvision.datasets.ImageFolder(opt.dataroot,
         #                                            transform=transforms.Compose([
