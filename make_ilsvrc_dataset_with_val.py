@@ -81,7 +81,16 @@ print('Copying ILSVRC from...[%s]'%orig_path)
 # Copy over subset of ILSVRC12 val set for colorization val set
 val_path = os.path.join(opt.out_path,'val/imgs')
 if os.path.isdir(val_path):
-	shutil.rmtree(val_path)
+	try:
+		os.unlink(val_path)
+		print('Unlink')
+	except:
+		print('Cant unlink')
+	try:
+		shutil.rmtree(val_path)
+		print('Rmtree')
+	except:
+		print('Cant rmtree')
 util.mkdirs(val_path)
 print('Making validation set in...[%s]'%val_path)
 for val_ind in range(1000):
@@ -91,7 +100,16 @@ for val_ind in range(1000):
 # Copy over subset of ILSVRC12 val set for colorization test set
 test_path = os.path.join(opt.out_path,'test/imgs')
 if os.path.isdir(test_path):
-	shutil.rmtree(test_path)
+	try:
+		os.unlink(test_path)
+		print('Unlink')
+	except:
+		print('Cant unlink')
+	try:
+		shutil.rmtree(test_path)
+		print('Rmtree')
+	except:
+		print('Cant rmtree')
 util.mkdirs(test_path)
 val_inds = np.load('%s/ilsvrclin12_val_inds.npy' % opt.resource_path)
 print('Making test set in...[%s]'%test_path)
