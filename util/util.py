@@ -20,6 +20,64 @@ import matplotlib
 from IPython import embed
 import matplotlib.pyplot as plt
 
+
+def integrate(h, w, fake_reg, col, dist, opt, thresh=0.78):
+    ops = opt.ops
+
+    # print(fake_reg.shape)
+    shape = fake_reg.shape
+    a = col[0]
+    b = col[1]
+
+    portions = np.zeros((len(ops)-1))
+    for i in range(len(ops)-1):
+        r1 = ops[i]
+        r2 = ops[i+1]
+        #
+        # labels = np.zeros((opt.fineSize, opt.fineSize))
+        # labels[np.where((r1 < dist) & (dist < r2))] = 100
+        # plt.imshow(labels)
+        # plt.show()
+
+
+        where = np.where((r1 < dist) & (dist < r2))
+        num_in_ann = len(where[0])
+        if num_in_ann != 0:
+            a_pixels = fake_reg[0, 0, :, :][where]
+            b_pixels = fake_reg[0, 0, :, :][where]
+            a_diff = a_pixels-a
+            b_diff = b_pixels-b
+            diff = np.sqrt(a_diff**2 + b_diff**2)
+            # print(diff)
+            num = len(diff[diff<thresh])
+            portions[i] = num/(len(diff)+0.0001)
+        else:
+            portions[i] = np.nan
+
+    return portions
+
+
+def get_circle(h, w, r2, r1, opt):
+        labels = np.zeros((opt.fineSize, opt.fineSize))
+        for i in np.arange(0, 360, 1):
+            y1 = h + r1 * math.cos(i)
+            x1 = w + r1 * math.sin(i)
+            y2 = h + r2 * math.cos(i)
+            x2 = w + r2 * math.sin(i)
+            x1 = np.clip(np.floor(x1), 0, opt.fineSize - 1).astype(int)
+            y1 = np.clip(np.floor(y1), 0, opt.fineSize - 1).astype(int)
+            x2 = np.clip(np.floor(x2), 0, opt.fineSize - 1).astype(int)
+            y2 = np.clip(np.floor(y2), 0, opt.fineSize - 1).astype(int)
+            maxx = max([x1, x2])
+            minx = min([x1, x2])
+            maxy = max([y1, y2])
+            miny = min([y1, y2])
+            labels[miny:maxy, minx:maxx] = 1000
+        plt.imshow(labels)
+        plt.show()
+        # print(labels.shape)
+        # return r
+
 # Shortcut for getting mean lab value of an area, for visualise_test
 def mean_pixel(point_a, opt, lab=True):
     if lab:
