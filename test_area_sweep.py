@@ -131,14 +131,24 @@ if __name__ == '__main__':
     # Save results
     print(portionss.shape)
     mean = np.mean(portionss[:, :, 1, :], axis=0)
-    std = np.nanstd(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
+    std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
     print(mean.shape)
-    for l in range(mean.shape[0]):
-        plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
-    # plt.plot(opt.ops, mean, 'bo-', label=str_now)
-    # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
-    # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
-    plt.xlabel('Distance')
-    plt.ylabel('Integral')
-    plt.legend(loc=0)
+    # for l in range(mean.shape[0]):
+    #     plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
+    # # plt.plot(opt.ops, mean, 'bo-', label=str_now)
+    # # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
+    # # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
+    # plt.xlabel('Distance')
+    # plt.ylabel('Integral')
+    # plt.legend(loc=0)
+    # plt.plot()
+    # plt.show()
     plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    #
+    # for l in range(mean.shape[1]):
+    #     plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
+    # plt.legend(loc=0)
+    # plt.xlabel('Weight Value')
+    # plt.ylabel('Integral')
+    # # plt.show()
+
