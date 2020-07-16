@@ -37,7 +37,7 @@
 # =====================
 # Logging information
 # =====================
-MODEL_NAME=wholeinet
+MODEL_NAME=wholeinetsp
 
 # slurm info - more at https://slurm.schedmd.com/sbatch.html#lbAJ
 echo "Job running on ${SLURM_JOB_NODELIST}"
@@ -79,7 +79,7 @@ echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 # input data directory path on the DFS
 src_path=/home/${USER}/datasets/INetData/FromHomeVal
-#caffe_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints/siggraph_caffemodel
+caffe_src=/home/${USER}/git/dissertation/pretrained_models/checkpoints/siggraph_retrained
 model_src=/home/${USER}/git/dissertation/checkpoints/${MODEL_NAME}
 resource_src=/home/${USER}/git/dissertation/resources
 mkdir -p ${model_src}  # make it if required
@@ -92,10 +92,13 @@ rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 echo "Rsync Data Completed"
 
 cpoint_path=${SCRATCH_HOME}/checkpoints/${MODEL_NAME}
+caffe_path=${SCRATCH_HOME}/checkpoints/siggraph_retrained
 cpoint_dir=${SCRATCH_HOME}/checkpoints/
 mkdir -p ${cpoint_path}  # make it if required
+mkdir -p ${caffe_path}  # make it if required
 #rsync --archive --update --compress --progress ${cpoint_path}/ ${model_src}
 rsync --archive --update --compress --progress ${model_src}/ ${cpoint_path}
+rsync --archive --update --compress --progress ${caffe_src}/ ${caffe_path}
 echo "Rsync Models Completed"
 
 resource_path=${SCRATCH_HOME}/resources
