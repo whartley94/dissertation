@@ -47,7 +47,7 @@ def integrate(h, w, fake_reg, col, dist, opt, thresh=0.78):
             b_pixels = fake_reg[0, 0, :, :][where]
             a_diff = a_pixels-a
             b_diff = b_pixels-b
-            if not len(opt.gpu_ids) > 0:
+            if len(opt.gpu_ids) > 0:
                 a_diff = a_diff.cpu().numpy()
                 b_diff = b_diff.cpu().numpy()
 
