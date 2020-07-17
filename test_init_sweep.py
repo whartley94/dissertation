@@ -167,8 +167,6 @@ if __name__ == '__main__':
             psnrs[i, 1] = psnrsz
 
 
-
-
             if i == opt.how_many - 1:
                 break
 
@@ -179,7 +177,7 @@ if __name__ == '__main__':
         np.save('%s%s/init_psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
 
     else:
-        str_now = '%02d_%02d_%02d%02d' % (7, 9, 12, 33)
+        str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 7)
         psnrs = np.load('%s%s/init_psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
 
     psnrs_mean = np.mean(psnrs, axis=0)
