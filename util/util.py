@@ -47,6 +47,10 @@ def integrate(h, w, fake_reg, col, dist, opt, thresh=0.78):
             b_pixels = fake_reg[0, 0, :, :][where]
             a_diff = a_pixels-a
             b_diff = b_pixels-b
+            if not len(opt.gpu_ids) > 0:
+                a_diff = a_diff.cpu().numpy()
+                b_diff = b_diff.cpu().numpy()
+
             diff = np.sqrt(a_diff**2 + b_diff**2)
             # print(diff)
             num = len(diff[diff<thresh])
@@ -517,7 +521,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None, 
     data_lab = rgb2lab(data_raw[0], opt)
     data['A'] = data_lab[:,[0,],:,:]
     data['B'] = data_lab[:,1:,:,:]
-    if opt.weighted_mask or opt.bb_mask or opt.pr_mask or opt.size_points:
+    if opt.weighted_mask or opt.bb_mask or opt.pr_mask or opt.size_points or opt.boundary_points:
         data['lab'] = data_lab
         just_ab = torch.zeros_like(data_lab)
         just_ab[:, 1:, :, :] = data_lab[:, 1:, :, :]
@@ -530,7 +534,7 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None, 
         mask = torch.sum(torch.abs(torch.max(torch.max(data['B'],dim=3)[0],dim=2)[0]-torch.min(torch.min(data['B'],dim=3)[0],dim=2)[0]),dim=1) >= thresh
         data['A'] = data['A'][mask,:,:,:]
         data['B'] = data['B'][mask,:,:,:]
-        if opt.weighted_mask or opt.bb_mask or opt.pr_mask or opt.size_points:
+        if opt.weighted_mask or opt.bb_mask or opt.pr_mask or opt.size_points or opt.boundary_points:
             data['abRgb'] = data['abRgb'][mask,:,:,:]
             data['lab'] = data['lab'][mask,:,:,:]
         # print('Removed %i points'%torch.sum(mask==0).numpy())
@@ -539,6 +543,9 @@ def get_colorization_data(data_raw, opt, ab_thresh=5., p=.125, num_points=None, 
 
     if opt.weighted_mask:
         return add_weighted_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform',
+                                           randomise_mask_weighs=randomise_mask_weights)
+    elif opt.boundary_points:
+        return boundary_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform',
                                            randomise_mask_weighs=randomise_mask_weights)
     elif opt.bb_mask:
         return add_bb_colour_patches(data, opt, p=p, num_points=num_points, samp='uniform')
@@ -741,6 +748,89 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
     data['mask_B']-=opt.mask_cent
     return data
 
+def boundary_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal',randomise_mask_weighs=0):
+# Add random color points sampled from ground truth based on:
+#   Number of points
+#   - if num_points is 0, then sample from geometric distribution, drawn from probability p
+#   - if num_points > 0, then sample that number of points
+#   Location of points
+#   - if samp is 'normal', draw from N(0.5, 0.25) of image
+#   - otherwise, draw from U[0, 1] of image
+#     print('Adding Weighted Colour Patches')
+    N,C,H,W = data['B'].shape
+
+    data['hint_B'] = torch.zeros_like(data['B'])
+    data['mask_B'] = torch.zeros_like(data['A'])
+    data['mask_B'] -= 0.5
+
+    for nn in range(N):
+        # print('Extracting', nn/N)
+
+        # print(data['abRgb'][nn, :, :, :].shape)
+        just_ab_as_rgb_smoothed = apply_smoothing(data['abRgb'][nn, :, :, :], opt)
+        ab_bins, ab_decoded = zhang_bins(just_ab_as_rgb_smoothed, opt)
+        # labels = dbscan_encoded_indexed(ab_bins)
+        labels, num_labels = bins_scimage_group_minimal(ab_bins)
+        boundaries = find_boundaries(labels, mode='thick')
+        # print('Extracted', nn/N)
+        if opt.pss is not None:
+            p = np.random.choice(opt.pss)
+
+        pp = 0
+        cont_cond = True
+
+        while(cont_cond):
+            if(num_points is None): # draw from geometric
+                # embed()
+                cont_cond = np.random.rand() < (1-p)
+            else: # add certain number of points
+                cont_cond = pp < num_points
+            if(not cont_cond): # skip out of loop if condition not met
+                continue
+
+            # P = 1
+            P = np.random.choice(opt.sample_Ps) # patch size
+
+            # sample location
+            if(samp=='normal'): # geometric distribution
+                h = int(np.clip(np.random.normal( (H-P+1)/2., (H-P+1)/4.), 0, H-P))
+                w = int(np.clip(np.random.normal( (W-P+1)/2., (W-P+1)/4.), 0, W-P))
+            else: # uniform distribution
+                h = np.random.randint(H-P+1)
+                w = np.random.randint(W-P+1)
+
+            # add color point
+            if(use_avg):
+                # embed()
+                hint = torch.mean(torch.mean(data['B'][nn,:,h:h+P,w:w+P],dim=2,keepdim=True),dim=1,keepdim=True).view(1,C,1,1)
+                bin_colour = torch.mean(torch.mean(ab_decoded[0, :, h:h + P, w:w + P], dim=2, keepdim=True), dim=1,
+                                        keepdim=True).view(1, C, 1, 1)
+            else:
+                hint = data['B'][nn,:,h:h+P,w:w+P]
+                bin_colour = ab_decoded[0, :, h:h + P, w:w + P]
+
+            unique_bins = np.unique(labels[h:h+P, w:w+P])
+
+            center_h = int(h + (P / 2))
+            center_w = int(w + (P / 2))
+            if boundaries[center_h, center_w] == 1:
+                data['mask_B'][nn, :, center_h, center_w] = 0.5
+
+            else:
+
+                data['hint_B'][nn, 0, center_h, center_w] = hint[0][0]
+                data['hint_B'][nn, 1, center_h, center_w] = hint[0][1]
+
+                data['mask_B'][nn,:,center_h,center_w] = 1.5
+
+
+
+
+                # increment counter
+            pp+=1
+
+    data['mask_B']-=opt.mask_cent
+    return data
 
 def add_sized_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,samp='normal'):
 # Add random color points sampled from ground truth based on:
@@ -1425,8 +1515,8 @@ def plot_data(data, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation or opt.spread_mask:
+        if opt.weighted_mask or opt.size_points or opt.boundary_points:
+            if opt.bin_variation or opt.spread_mask or opt.boundary_points:
                 hint_im[mask_im == -1] = 0
             else:
                 hint_im[mask_im==-0.5] = 0
@@ -1452,8 +1542,8 @@ def plot_data(data, opt):
             else:
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)
             ax5.imshow(labels, cmap=cmap)
-        if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation or opt.spread_mask:
+        if opt.weighted_mask or opt.size_points or opt.boundary_points:
+            if opt.bin_variation or opt.spread_mask or opt.boundary_points:
                 im3 = ax3.imshow(mask_im, vmin=-1, vmax=1)
             elif opt.continuous_mask:
                 im3 = ax3.imshow(mask_im, vmin=-0.5, vmax=0.5)

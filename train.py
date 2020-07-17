@@ -93,7 +93,7 @@ if __name__ == '__main__':
     time_since_go_time = time.time() - go_time
     print('TimeSinceGo', time_since_go_time)
 
-    if opt.weighted_mask:
+    if opt.weighted_mask or opt.boundary_points:
         opt.sample_Ps = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                          2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, ]
         opt.pss = np.zeros((100))
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
         # for i, data in enumerate(dataset):
         for i, data_raw in enumerate(dataset_loader):
-            print(data_raw)
+            # print(data_raw)
             time_since_go_time = time.time() - go_time
             # print('TimeSince Go Time', time_since_go_time)
             if time_since_go_time > max_time:
