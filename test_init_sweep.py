@@ -135,7 +135,10 @@ if __name__ == '__main__':
             # weight1 = float(num_same_bin / (total_size))
 
             data['mask_B'][data['mask_B'] == -0.5] = -1
-            active_points = np.asarray(np.where(data['mask_B'] == 0.5))
+            if len(opt.gpu_ids) > 0:
+                active_points = np.asarray(np.where(data['mask_B'].cpu().numpy() == 0.5))
+            else:
+                active_points = np.asarray(np.where(data['mask_B'] == 0.5))
 
             for point in range(len(active_points[0])):
                 ix = active_points[:, point]
@@ -146,6 +149,8 @@ if __name__ == '__main__':
                 data['mask_B'][ix[0], ix[1], ix[2], ix[3]] = weight1
 
             # print('LEN' ,len(np.where(data['mask_B'] == 0.5)[0]))
+            if len(opt.gpu_ids) > 0:
+                data['mask_B'] = data['mask_B'].cuda()
 
             model.set_input(data)
             model.test()
