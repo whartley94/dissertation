@@ -124,14 +124,16 @@ if __name__ == '__main__':
 
     else:
         # str_now = '%02d_%02d_%02d%02d' % (7, 16, 12, 3)
-        str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
+        str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3)
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     print(portionss.shape)
-    mean = np.mean(portionss[:, :, 1, :], axis=0)
+    mean = np.nanmean(portionss[:, :, 1, :], axis=0)
     std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
     print(mean.shape)
+    print(mean)
     for l in range(mean.shape[0]):
         plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
@@ -149,6 +151,7 @@ if __name__ == '__main__':
 
     if opt.load_sweep:
         for l in range(mean.shape[1]):
+            print(l)
             plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
         plt.legend(loc=0)
         plt.xlabel('Weight Value')
