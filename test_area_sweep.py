@@ -35,7 +35,6 @@ if __name__ == '__main__':
     # opt.dataroot = './dataset/ilsvrc2012/%s/' % opt.phase
     opt.loadSize = 256
     opt.how_many = 1000
-    opt.how_many = 10
     opt.aspect_ratio = 1.0
     opt.sample_Ps = [3,]
     opt.load_model = True
@@ -125,7 +124,7 @@ if __name__ == '__main__':
 
     else:
         # str_now = '%02d_%02d_%02d%02d' % (7, 16, 12, 3)
-        str_now = '%02d_%02d_%02d%02d' % (7, 16, 13, 52)
+        str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
@@ -133,22 +132,26 @@ if __name__ == '__main__':
     mean = np.mean(portionss[:, :, 1, :], axis=0)
     std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
     print(mean.shape)
-    # for l in range(mean.shape[0]):
-    #     plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
-    # # plt.plot(opt.ops, mean, 'bo-', label=str_now)
-    # # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
-    # # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
-    # plt.xlabel('Distance')
-    # plt.ylabel('Integral')
-    # plt.legend(loc=0)
-    # plt.plot()
-    # plt.show()
-    plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
-    #
-    # for l in range(mean.shape[1]):
-    #     plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
-    # plt.legend(loc=0)
-    # plt.xlabel('Weight Value')
-    # plt.ylabel('Integral')
-    # # plt.show()
+    for l in range(mean.shape[0]):
+        plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
+    # plt.plot(opt.ops, mean, 'bo-', label=str_now)
+    # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
+    # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
+    plt.xlabel('Distance')
+    plt.ylabel('Integral')
+    plt.legend(loc=0)
+    plt.plot()
+    if opt.load_sweep:
+        plt.show()
+    else:
+        plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+
+
+    if opt.load_sweep:
+        for l in range(mean.shape[1]):
+            plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
+        plt.legend(loc=0)
+        plt.xlabel('Weight Value')
+        plt.ylabel('Integral')
+        plt.show()
 
