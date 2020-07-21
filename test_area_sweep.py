@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # num_points = np.unique(num_points.astype('int'))
     # N = len(num_points)
     num_points = 1
-    weights = np.linspace(-4, 1, 20)
+    weights = np.linspace(-1, 1, 20)
     weights_l = len(weights)
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 20)
@@ -129,11 +129,11 @@ if __name__ == '__main__':
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
-    print(portionss.shape)
+    # print(portionss.shape)
     mean = np.nanmean(portionss[:, :, 1, :], axis=0)
     std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
-    print(mean.shape)
-    print(mean)
+    # print(mean.shape)
+    # print(mean)
     for l in range(mean.shape[0]):
         plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
@@ -145,13 +145,13 @@ if __name__ == '__main__':
     plt.plot()
     if opt.load_sweep:
         plt.show()
-    else:
-        plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    # else:
+    #     plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
 
 
     if opt.load_sweep:
         for l in range(mean.shape[1]):
-            print(l)
+            # print(l)
             plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
         plt.legend(loc=0)
         plt.xlabel('Weight Value')
