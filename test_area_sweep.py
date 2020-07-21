@@ -22,6 +22,12 @@ import shutil
 import datetime as dt
 import matplotlib.pyplot as plt
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+
+
 if __name__ == '__main__':
 
     opt = TrainOptions().parse()
@@ -134,8 +140,15 @@ if __name__ == '__main__':
     std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
     # print(mean.shape)
     # print(mean)
+
+    # x = np.linspace(0.0, 1.0, 100)
+    viridis = cm.get_cmap('viridis', mean.shape[0])
+    viridis = cm.get_cmap('cividis', mean.shape[0])
+    viridis = cm.get_cmap('gray', mean.shape[0]*1.2)
+
+
     for l in range(mean.shape[0]):
-        plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]))
+        plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]), c=viridis(l))
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
     # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
     # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
@@ -150,9 +163,10 @@ if __name__ == '__main__':
 
 
     if opt.load_sweep:
+        viridis = cm.get_cmap('viridis', mean.shape[1])
         for l in range(mean.shape[1]):
             # print(l)
-            plt.plot(weights, mean[:, l], label=str(opt.ops[l]))
+            plt.plot(weights, mean[:, l], label=str(opt.ops[l]), c=viridis(l))
         plt.legend(loc=0)
         plt.xlabel('Weight Value')
         plt.ylabel('Integral')

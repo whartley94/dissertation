@@ -39,7 +39,7 @@ if __name__ == '__main__':
     opt.loadSize = 256
     opt.how_many = 1000
     opt.aspect_ratio = 1.0
-    opt.sample_Ps = [6,]
+    opt.sample_Ps = [3,]
     opt.load_model = True
     # if opt.plot_data_gen:
         # np.random.seed(5)
@@ -52,8 +52,10 @@ if __name__ == '__main__':
     # num_points = np.unique(num_points.astype('int'))
     # N = len(num_points)
     num_points = 20
-    randomisers = np.linspace(0, 0.45, 40)
+    randomisers = np.linspace(0, 0.6, 40)
     randomisers_l = len(randomisers)
+    repeats = range(5)
+    repeats_l = len(repeats)
 
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
@@ -93,7 +95,7 @@ if __name__ == '__main__':
         # print('./checkpoints/%s/latest_net_G.pth' % opt.name)
         shutil.copyfile(model_path, model_backup_path)
 
-        psnrs = np.zeros((opt.how_many, randomisers_l))
+        psnrs = np.zeros((opt.how_many, repeats_l, randomisers_l))
 
         # if opt.weighted_mask:
             # opt.sample_Ps = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -106,65 +108,69 @@ if __name__ == '__main__':
             data_raw[0] = util.crop_mult(data_raw[0], mult=8)
 
             for nn in range(randomisers_l):
-                # embed()
-                data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=num_points,
-                                                  randomise_mask_weights=randomisers[nn])
-                # print(data['mask_B'])
-                # print(data['hint_B'])
 
-                model.set_input(data)
-                model.test()
-                visuals = model.get_current_visuals()
+                for repeat in repeats:
+                    # embed()
+                    data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=num_points,
+                                                      randomise_mask_weights=randomisers[nn])
+                    # print(data['mask_B'])
+                    # print(data['hint_B'])
 
-                real = util.tensor2im(visuals['real'])
-                fake_reg = util.tensor2im(visuals['fake_reg'])
-                if opt.plot_data_gen:
-                    util.plot_data_results(data, real, fake_reg, opt)
-                    print('nn', nn)
+                    model.set_input(data)
+                    model.test()
+                    visuals = model.get_current_visuals()
 
-                psnrsz = util.calculate_psnr_np(real, fake_reg)
-                if opt.plot_data_gen:
-                    print(psnrsz)
-                psnrs[i, nn] = psnrsz
+                    real = util.tensor2im(visuals['real'])
+                    fake_reg = util.tensor2im(visuals['fake_reg'])
+                    if opt.plot_data_gen:
+                        util.plot_data_results(data, real, fake_reg, opt)
+                        print('nn', nn)
+
+                    psnrsz = util.calculate_psnr_np(real, fake_reg)
+                    if opt.plot_data_gen:
+                        print(psnrsz)
+                    psnrs[i, repeat, nn] = psnrsz
 
             if i == opt.how_many - 1:
                 break
 
             bar.update(i)
 
-        # Save results
-        psnrs_mean = np.mean(psnrs, axis=0)
-        psnrs_std = np.std(psnrs, axis=0) / np.sqrt(opt.how_many)
-
         # save_cpoint_dir = os.path.join(opt.checkpoints_dir, '%s/psnrs_mean_%s' % (opt.name,str_now))
-        np.save('%s%s/shifted_psnrs_mean_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_mean)
-        np.save('%s%s/shifted_psnrs_std_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs_std)
         np.save('%s%s/shifted_psnrs_%s' % (opt.checkpoints_dir, opt.name,str_now), psnrs)
-        psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
-        print('PSNR Means: ', psnrmeans)
+
 
     else:
-        str_now = '%02d_%02d_%02d%02d' % (7, 9, 12, 33)
-        psnrs_mean = np.load('%s%s/shifted_psnrs_mean_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
-        psnrs_std = np.load('%s%s/shifted_psnrs_std_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
+        str_now = '%02d_%02d_%02d%02d' % (7, 15, 23, 35)
         psnrs = np.load('%s%s/shifted_psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
-        psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
-        print('PSNR Means: ', psnrmeans)
+
+    # Avg results
+    psnrs_mean = np.mean(psnrs, axis=0)
+    psnrs_mean = np.mean(psnrs_mean, axis=0)
+    print(psnrs_mean)
+    psnrs_std = np.std(psnrs, axis=0) / np.sqrt(psnrs.shape[0])
+    psnrs_std = np.std(psnrs_std, axis=0) / np.sqrt(psnrs.shape[1])
+    print(psnrs_std)
+
+    psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
+    print('PSNR Means: ', psnrmeans)
 
 
-
-    num_points_hack = 1. * num_points
-    # num_points_hack[0] = .4
-
-    plt.plot(randomisers, psnrs_mean, 'bo-', label=str_now)
-    plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
-    plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
-
-    # plt.xscale('log')
-    # plt.xticks([.4,1,2,5,10,20,50,100,200,500],
-    #     ['Auto','1','2','5','10','20','50','100','200','500'])
-    plt.xlabel('Random Shift')
-    plt.ylabel('PSNR [db]')
-    plt.legend(loc=0)
-    # plt.xlim((randomisers[0], randomisers[-1]))
-    plt.savefig('%s%s/shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    # print(psnrs_std)
+    # num_points_hack = 1. * num_points
+    # # num_points_hack[0] = .4
+    #
+    # plt.plot(randomisers, psnrs_mean, 'bo-', label=str_now)
+    # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
+    # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
+    #
+    # # plt.xscale('log')
+    # # plt.xticks([.4,1,2,5,10,20,50,100,200,500],
+    # #     ['Auto','1','2','5','10','20','50','100','200','500'])
+    # plt.xlabel('Random Shift')
+    # plt.ylabel('PSNR [db]')
+    # plt.legend(loc=0)
+    # # plt.xlim((randomisers[0], randomisers[-1]))
+    # # plt.savefig('%s%s/shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    # plt.plot()
+    # plt.show()
