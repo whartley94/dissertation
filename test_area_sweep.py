@@ -139,16 +139,19 @@ if __name__ == '__main__':
         # str_now = '%02d_%02d_%02d%02d' % (7, 16, 12, 3)
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3) #This one was -4 to 1 weight - col 0.8, 0.8. -opt.ops = np.linspace(0, hyp, 20)
-        str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 20)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 20)
+        str_now = '%02d_%02d_%02d%02d' % (7, 22, 10, 11) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 50)
 
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     # print(portionss.shape)
-    which_thresh = 1
+    which_thresh = 0
     which_col = 0
-    mean = np.nanmean(portionss[:, :, which_thresh, which_col, :], axis=0)
-    std = np.std(portionss[:, :, which_thresh, which_col, :], axis=0) / np.sqrt(opt.how_many)
+    mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
+    std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
+    # mean = np.nanmean(portionss[:, :, which_thresh, which_col, :], axis=0)
+    # std = np.std(portionss[:, :, which_thresh, which_col, :], axis=0) / np.sqrt(opt.how_many)
     # print(mean.shape)
     # print(mean)
 
