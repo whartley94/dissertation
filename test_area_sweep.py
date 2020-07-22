@@ -57,10 +57,13 @@ if __name__ == '__main__':
     num_points = 1
     # weights = np.linspace(-4, 1, 20)
     weights = np.linspace(-1, 1, 20)
-
     weights_l = len(weights)
+
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 50)
+
+    cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
+    cols_l = len(cols)
 
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
@@ -82,7 +85,7 @@ if __name__ == '__main__':
         shutil.copyfile(model_path, model_backup_path)
 
         threshes = 3
-        portionss = np.zeros((opt.how_many, weights_l, threshes, len(opt.ops)-1))
+        portionss = np.zeros((opt.how_many, weights_l, threshes, cols_l, len(opt.ops)-1))
 
         bar = pb.ProgressBar(max_value=opt.how_many)
         for i, data_raw in enumerate(dataset_loader):
@@ -96,31 +99,33 @@ if __name__ == '__main__':
                 # embed()
                 # location = [50, 50]
                 data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=0)
-                col = torch.tensor([0.8, 0.8], dtype=torch.float)
-                data['mask_B'][0, 0, location[0], location[1]] = weights[nn]
-                data['hint_B'][0, :, location[0], location[1]] = col
-                # print(data['hint_B'][data['hint_B']!=0])
-                # print(data['hint_B'])
 
-                model.set_input(data)
-                model.test()
-                visuals = model.get_current_visuals()
+                for col_i, colr in enumerate(cols):
+                    col = torch.tensor(colr, dtype=torch.float)
+                    data['mask_B'][0, 0, location[0], location[1]] = weights[nn]
+                    data['hint_B'][0, :, location[0], location[1]] = col
+                    # print(data['hint_B'][data['hint_B']!=0])
+                    # print(data['hint_B'])
 
-                real = util.tensor2im(visuals['real'])
-                fake_reg = util.tensor2im(visuals['fake_reg'])
+                    model.set_input(data)
+                    model.test()
+                    visuals = model.get_current_visuals()
 
-                dist = np.zeros((opt.fineSize, opt.fineSize))
-                for j in range(opt.fineSize):
-                    for k in range(opt.fineSize):
-                        dist[j, k] = np.sqrt(((j - location[0]) ** 2) + ((k - location[1]) ** 2))
+                    real = util.tensor2im(visuals['real'])
+                    fake_reg = util.tensor2im(visuals['fake_reg'])
 
-                portionss[i, nn, 0, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.82)
-                portionss[i, nn, 1, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt)
-                portionss[i, nn, 2, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.74)
+                    dist = np.zeros((opt.fineSize, opt.fineSize))
+                    for j in range(opt.fineSize):
+                        for k in range(opt.fineSize):
+                            dist[j, k] = np.sqrt(((j - location[0]) ** 2) + ((k - location[1]) ** 2))
 
-                if opt.plot_data_gen:
-                    util.plot_data_results(data, real, fake_reg, opt)
-                    print('nn', nn)
+                    portionss[i, nn, 0, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.82)
+                    portionss[i, nn, 1, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt)
+                    portionss[i, nn, 2, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.74)
+
+                    if opt.plot_data_gen:
+                        util.plot_data_results(data, real, fake_reg, opt)
+                        print('nn', nn)
 
             if i == opt.how_many - 1:
                 break
@@ -133,16 +138,17 @@ if __name__ == '__main__':
     else:
         # str_now = '%02d_%02d_%02d%02d' % (7, 16, 12, 3)
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
-        # str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3) #This one was -4 to 1 weight - col 0.8, 0.8.
-        str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.
+        # str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3) #This one was -4 to 1 weight - col 0.8, 0.8. -opt.ops = np.linspace(0, hyp, 20)
+        str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 20)
 
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     # print(portionss.shape)
-    which_one = 1
-    mean = np.nanmean(portionss[:, :, which_one, :], axis=0)
-    std = np.std(portionss[:, :, which_one, :], axis=0) / np.sqrt(opt.how_many)
+    which_thresh = 1
+    which_col = 0
+    mean = np.nanmean(portionss[:, :, which_thresh, which_col, :], axis=0)
+    std = np.std(portionss[:, :, which_thresh, which_col, :], axis=0) / np.sqrt(opt.how_many)
     # print(mean.shape)
     # print(mean)
 
@@ -161,6 +167,7 @@ if __name__ == '__main__':
     plt.ylabel('Integral')
     plt.legend(loc=0)
     plt.plot()
+    plt.show()
     if opt.load_sweep:
         plt.show()
     # else:
