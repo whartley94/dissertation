@@ -55,7 +55,9 @@ if __name__ == '__main__':
     # num_points = np.unique(num_points.astype('int'))
     # N = len(num_points)
     num_points = 1
+    # weights = np.linspace(-4, 1, 20)
     weights = np.linspace(-1, 1, 20)
+
     weights_l = len(weights)
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 20)
@@ -94,7 +96,7 @@ if __name__ == '__main__':
                 # embed()
                 # location = [50, 50]
                 data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=0)
-                col = torch.tensor([0.8, 0.8], dtype=torch.float)
+                col = torch.tensor([-0.8, -0.8], dtype=torch.float)
                 data['mask_B'][0, 0, location[0], location[1]] = weights[nn]
                 data['hint_B'][0, :, location[0], location[1]] = col
                 # print(data['hint_B'][data['hint_B']!=0])
@@ -131,20 +133,23 @@ if __name__ == '__main__':
     else:
         # str_now = '%02d_%02d_%02d%02d' % (7, 16, 12, 3)
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
-        str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3) #This one was -4 to 1 weight - col 0.8, 0.8.
+        str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.
+
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     # print(portionss.shape)
-    mean = np.nanmean(portionss[:, :, 1, :], axis=0)
-    std = np.std(portionss[:, :, 1, :], axis=0) / np.sqrt(opt.how_many)
+    which_one = 1
+    mean = np.nanmean(portionss[:, :, which_one, :], axis=0)
+    std = np.std(portionss[:, :, which_one, :], axis=0) / np.sqrt(opt.how_many)
     # print(mean.shape)
     # print(mean)
 
     # x = np.linspace(0.0, 1.0, 100)
     viridis = cm.get_cmap('viridis', mean.shape[0])
-    viridis = cm.get_cmap('cividis', mean.shape[0])
-    viridis = cm.get_cmap('gray', mean.shape[0]*1.2)
+    # viridis = cm.get_cmap('cividis', mean.shape[0])
+    # viridis = cm.get_cmap('gray', mean.shape[0]*1.2)
 
 
     for l in range(mean.shape[0]):

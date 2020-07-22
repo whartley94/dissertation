@@ -141,15 +141,18 @@ if __name__ == '__main__':
 
 
     else:
-        str_now = '%02d_%02d_%02d%02d' % (7, 15, 23, 35)
+        str_now = '%02d_%02d_%02d%02d' % (7, 21, 18, 8)
         psnrs = np.load('%s%s/shifted_psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
 
     # Avg results
     psnrs_mean = np.mean(psnrs, axis=0)
     psnrs_mean = np.mean(psnrs_mean, axis=0)
     print(psnrs_mean)
-    psnrs_std = np.std(psnrs, axis=0) / np.sqrt(psnrs.shape[0])
-    psnrs_std = np.std(psnrs_std, axis=0) / np.sqrt(psnrs.shape[1])
+    psnrs_std = np.std(psnrs, axis=0)\
+                # / np.sqrt(psnrs.shape[0])
+    psnrs_std = np.std(psnrs_std, axis=0)\
+                # / np.sqrt(psnrs.shape[0])
+                                                    # * psnrs.shape[1])
     print(psnrs_std)
 
     psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
@@ -160,17 +163,17 @@ if __name__ == '__main__':
     # num_points_hack = 1. * num_points
     # # num_points_hack[0] = .4
     #
-    # plt.plot(randomisers, psnrs_mean, 'bo-', label=str_now)
-    # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
-    # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
-    #
-    # # plt.xscale('log')
-    # # plt.xticks([.4,1,2,5,10,20,50,100,200,500],
-    # #     ['Auto','1','2','5','10','20','50','100','200','500'])
-    # plt.xlabel('Random Shift')
-    # plt.ylabel('PSNR [db]')
-    # plt.legend(loc=0)
-    # # plt.xlim((randomisers[0], randomisers[-1]))
-    # # plt.savefig('%s%s/shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
-    # plt.plot()
-    # plt.show()
+    plt.plot(randomisers, psnrs_mean, 'bo-', label=str_now)
+    plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
+    plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
+
+    # plt.xscale('log')
+    # plt.xticks([.4,1,2,5,10,20,50,100,200,500],
+    #     ['Auto','1','2','5','10','20','50','100','200','500'])
+    plt.xlabel('Random Shift')
+    plt.ylabel('PSNR [db]')
+    plt.legend(loc=0)
+    # plt.xlim((randomisers[0], randomisers[-1]))
+    # plt.savefig('%s%s/shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    plt.plot()
+    plt.show()
