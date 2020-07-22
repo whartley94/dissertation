@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     weights_l = len(weights)
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
-    opt.ops = np.linspace(0, hyp, 20)
+    opt.ops = np.linspace(0, hyp, 50)
 
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                 # embed()
                 # location = [50, 50]
                 data = util.get_colorization_data(data_raw, opt, ab_thresh=0., num_points=0)
-                col = torch.tensor([-0.8, -0.8], dtype=torch.float)
+                col = torch.tensor([0.8, 0.8], dtype=torch.float)
                 data['mask_B'][0, 0, location[0], location[1]] = weights[nn]
                 data['hint_B'][0, :, location[0], location[1]] = col
                 # print(data['hint_B'][data['hint_B']!=0])
