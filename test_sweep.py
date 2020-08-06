@@ -23,7 +23,11 @@ import progressbar as pb
 import shutil
 
 import datetime as dt
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
+
+plt.rcParams.update({'font.size': 14})
 
 if __name__ == '__main__':
 
@@ -146,13 +150,41 @@ if __name__ == '__main__':
         psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
         print('PSNR Means: ', psnrmeans)
 
+        num_points_hack = 1. * num_points
+        num_points_hack[0] = .4
+        plt.plot(num_points_hack, psnrs_mean, 'bo-', label=str_now)
+        plt.plot(num_points_hack, psnrs_mean + psnrs_std, 'b--')
+        plt.plot(num_points_hack, psnrs_mean - psnrs_std, 'b--')
+
     else:
-        str_now = '%02d_%02d_%02d%02d' % (7, 9, 12, 33)
-        psnrs_mean = np.load('%s%s/psnrs_mean_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
-        psnrs_std = np.load('%s%s/psnrs_std_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
-        psnrs = np.load('%s%s/psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
-        psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
-        print('PSNR Means: ', psnrmeans)
+        num_points_hack = 1. * num_points
+        num_points_hack[0] = .4
+        # str_now = '%02d_%02d_%02d%02d' % (7, 9, 12, 33)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 13, 15, 24)
+        str_now = '%02d_%02d_%02d%02d' % (7, 14, 17, 24)
+        strs_now = []
+        cols = []
+        colsv = []
+        labels = []
+        strs_now.append('%02d_%02d_%02d%02d' % (7, 14, 17, 24))
+        cols.append('bo-')
+        colsv.append('b--')
+        labels.append(r'Ours $T_{v}$')
+        strs_now.append('%02d_%02d_%02d%02d' % (7, 13, 15, 24))
+        cols.append('go-')
+        colsv.append('g--')
+        labels.append(r'Ours $T_{s}$')
+
+        for j, i in enumerate(strs_now):
+            psnrs_mean = np.load('%s%s/psnrs_mean_%s.npy' % (opt.checkpoints_dir, opt.name, i))
+            psnrs_std = np.load('%s%s/psnrs_std_%s.npy' % (opt.checkpoints_dir, opt.name,i))
+            psnrs = np.load('%s%s/psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,i))
+            psnrmeans = ['%.2f' % psnr for psnr in psnrs_mean]
+            print('PSNR Means: ', psnrmeans)
+            plt.plot(num_points_hack, psnrs_mean, cols[j], label=labels[j])
+            plt.plot(num_points_hack, psnrs_mean + psnrs_std, colsv[j])
+            plt.plot(num_points_hack, psnrs_mean - psnrs_std, colsv[j])
+
 
 
     old_results = np.load('%s/psnrs_siggraph.npy' % opt.resources_dir)
@@ -162,21 +194,18 @@ if __name__ == '__main__':
     print('Old PSNR Means: ', oldmeans)
 
 
-    num_points_hack = 1. * num_points
-    num_points_hack[0] = .4
 
-    plt.plot(num_points_hack, psnrs_mean, 'bo-', label=str_now)
-    plt.plot(num_points_hack, psnrs_mean + psnrs_std, 'b--')
-    plt.plot(num_points_hack, psnrs_mean - psnrs_std, 'b--')
-    plt.plot(num_points_hack, old_mean, 'ro-', label='siggraph17')
+
+
+    plt.plot(num_points_hack, old_mean, 'ro-', label='Baseline Zhang17')
     plt.plot(num_points_hack, old_mean + old_std, 'r--')
     plt.plot(num_points_hack, old_mean - old_std, 'r--')
-
     plt.xscale('log')
     plt.xticks([.4,1,2,5,10,20,50,100,200,500],
         ['Auto','1','2','5','10','20','50','100','200','500'])
-    plt.xlabel('Number of points')
-    plt.ylabel('PSNR [db]')
+    plt.xlabel(r'\textbf{Number of Patches Revealed}')
+    plt.ylabel(r'\textbf{PSNR} (dB)')
     plt.legend(loc=0)
     plt.xlim((num_points_hack[0], num_points_hack[-1]))
-    plt.savefig('%s%s/sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+    plt.savefig('%s%s/sweep_%s_bb.png' % (opt.checkpoints_dir, opt.name, str_now), dpi=600)
+    plt.show()

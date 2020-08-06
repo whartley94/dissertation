@@ -4,6 +4,8 @@ from options.train_options import TrainOptions
 from models import create_model
 from util import html
 from PIL import Image
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
 import copy
 import torch
@@ -15,20 +17,21 @@ import numpy as np
 
 if __name__ == '__main__':
     np.random.seed(1)
-    images_to_scan = 40  # Number of images to process
-    n = 10  # Number of points to sample
-    P = 5  # Point sizes
+    # images_to_scan = 40  # Number of images to process
+    images_to_scan = 4
+    n = 8  # Number of points to sample
+    P = 6  # Point sizes
     init_points = 10  # Number of points to use for 'before' image
     root = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/colorization-pytorch/'
     name = root + 'resources/its' + str(images_to_scan) +\
              'n' + str(n) + 'p' + str(P) + 'ip' + str(init_points)
     npname = name + '.npy'
 
-    if not os.path.isfile(npname):
+    if not os.path.isfile(npname) or True:
 
         show_images = False
-        show_effect_mx = False
-        save_figs = False
+        show_effect_mx = True
+        save_figs = True
         to_visualize = ['gray', 'hint', 'hint_ab', 'fake_entr', 'real', 'fake_reg', 'real_ab', 'fake_ab_reg', ]
         to_display = 'fake_reg'
         which_channel = 'fake_reg'  # Which channel to scan for colour symmetry checks?
@@ -117,6 +120,7 @@ if __name__ == '__main__':
                     lab_colours_after = util.mean_pixel(point, opt, True)
                     rgb_colours_after[loc] = util.mean_pixel(point, opt, False)
                     effect_mx[j, loc] = np.linalg.norm(rgb_colours[loc] - rgb_colours_after[loc])
+                    # effect_mx[j, loc] = rgb_colours_after[loc][0]
 
                 if show_images:
                     for k in to_visualize:
@@ -132,6 +136,10 @@ if __name__ == '__main__':
                                     real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
                                                                     rgb_colours[l], 'Black')
                             image_pil = Image.fromarray(real_im)
+
+
+
+
                             ax1.imshow(image_pil)
 
                             real_im = util.tensor2im(visuals_n[k])
@@ -151,12 +159,63 @@ if __name__ == '__main__':
                                 plt.show()
                             plt.close()
 
+                # ----------------
+                # HERES THE PLOT OF JUST THE IMAGE WITH SQUARES HILIGHTING WHERE
+                # -------------------
+                save_image_with_squares = False
+                if save_image_with_squares:
+                    for k in to_visualize:
+                        if k in to_display:
+                            real_im = util.tensor2im(visuals[k])
+                            real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P,
+                                                            rgb_colours[j], 'Black')
+                            for l in range(n):
+                                if l is not j:
+                                    real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
+                                                                    rgb_colours[l], 'Black')
+                            image_pil = Image.fromarray(real_im)
+
+                            plt.imshow(image_pil)
+                            # plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/squares.pgf')
+                            # plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/squares.png', dpi=400)
+                            plt.show()
+
+                            real_im = util.tensor2im(visuals_n[k])
+                            real_im = util.draw_fill_square(real_im, locations[j, 0], locations[j, 1], P,
+                                                            rgb_colours_after[j], 'White')
+                            for l in range(n):
+                                if l is not j:
+                                    real_im = util.draw_fill_square(real_im, locations[l, 0], locations[l, 1], P,
+                                                                    rgb_colours_after[l], 'Black')
+                            image_pil = Image.fromarray(real_im)
+                            plt.imshow(image_pil)
+
+                            if i <= 2 and save_figs:
+                                figname = root + 'python_experiment_scripts/symmetry_results/' + 'image' + str(
+                                    i) + 'point' + str(j) + '.png'
+                                plt.savefig(
+                                    '/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/squares' + str(
+                                    i) +'.png', dpi=600)
+                                plt.savefig(figname)
+                            else:
+                                plt.show()
+                            plt.close()
+
             if show_effect_mx:
                 # print(effect_mx)
                 fig, ax = plt.subplots(figsize=(5, 5))
                 # fx_image = Image.fromarray(effect_mx)
+                for l in range(effect_mx.shape[0]):
+                    effect_mx[l, l] = 0
                 c = ax.imshow(effect_mx)
                 cbar = fig.colorbar(c)
+                cbar.set_label(r'\textbf{Relative Colour Change} $(D)$', rotation=270, labelpad=22, fontsize=16)
+                # plt.tight_layout()
+                if i <= 2:
+                    # plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/effmx' +str(i) +'.pgf')
+                    plt.savefig(
+                        '/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/effmx' + str(
+                            i) + '.png', dpi=400)
                 if i <= 2 and save_figs:
                     figname = root + 'python_experiment_scripts/symmetry_results/' + 'image' + str(i) + 'M' + '.png'
                     plt.savefig(figname)
@@ -195,5 +254,15 @@ if __name__ == '__main__':
     # gendip = int((lendip**2)/50)
     # print('Bins ', gendip)
     print(len(all_e_diff))
-    plt.hist(all_e_diff, bins=70)
+
+    plt.figure(figsize=(3.5,2.6))
+    plt.rc('text', usetex=True)
+    # plt.rc('font', family='serif')
+    plt.hist(all_e_diff, bins=85)
+    plt.xlabel(r'\textbf{Error} $(E)$')
+    # plt.xlabel('Error E')
+    plt.ylabel(r'\textbf{Frequency}')
+    plt.tight_layout()
+    # plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/InformaticsMScDissertationLatex/histogram.pgf')
+
     plt.show()

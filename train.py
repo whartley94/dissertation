@@ -129,6 +129,7 @@ if __name__ == '__main__':
             data = util.get_colorization_data(data_raw, opt, p=opt.sample_p)
             if opt.plot_data_gen:
                 util.plot_data(data, opt)
+                # util.plot_lab(data, opt)
             if(data is None):
                 continue
 

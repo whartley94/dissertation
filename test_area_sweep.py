@@ -62,8 +62,12 @@ if __name__ == '__main__':
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 50)
 
-    cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
+    # cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
+    cols = [[-0.8, 0.8], [0.8, -0.8]]
     cols_l = len(cols)
+
+    threshes = np.linspace(0.74, 1.4, 20)
+    threshes_l = len(threshes)
 
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
@@ -84,8 +88,7 @@ if __name__ == '__main__':
         # print('./checkpoints/%s/latest_net_G.pth' % opt.name)
         shutil.copyfile(model_path, model_backup_path)
 
-        threshes = 3
-        portionss = np.zeros((opt.how_many, weights_l, threshes, cols_l, len(opt.ops)-1))
+        portionss = np.zeros((opt.how_many, weights_l, threshes_l, cols_l, len(opt.ops)-1))
 
         bar = pb.ProgressBar(max_value=opt.how_many)
         for i, data_raw in enumerate(dataset_loader):
@@ -102,6 +105,7 @@ if __name__ == '__main__':
 
                 for col_i, colr in enumerate(cols):
                     col = torch.tensor(colr, dtype=torch.float)
+                    # print(col)
                     data['mask_B'][0, 0, location[0], location[1]] = weights[nn]
                     data['hint_B'][0, :, location[0], location[1]] = col
                     # print(data['hint_B'][data['hint_B']!=0])
@@ -119,9 +123,9 @@ if __name__ == '__main__':
                         for k in range(opt.fineSize):
                             dist[j, k] = np.sqrt(((j - location[0]) ** 2) + ((k - location[1]) ** 2))
 
-                    portionss[i, nn, 0, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.82)
-                    portionss[i, nn, 1, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt)
-                    portionss[i, nn, 2, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=0.74)
+                    for tt_i, tt in enumerate(threshes):
+                        portionss[i, nn, tt_i, col_i, :] = util.integrate(location[0], location[1], model.fake_B_reg, col, dist, opt, thresh=tt)
+                        # print(portionss[i, nn, tt_i, col_i, :])
 
                     if opt.plot_data_gen:
                         util.plot_data_results(data, real, fake_reg, opt)
@@ -140,18 +144,19 @@ if __name__ == '__main__':
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 11, 37)
         # str_now = '%02d_%02d_%02d%02d' % (7, 17, 12, 3) #This one was -4 to 1 weight - col 0.8, 0.8. -opt.ops = np.linspace(0, hyp, 20)
         # str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 20)
-        str_now = '%02d_%02d_%02d%02d' % (7, 22, 10, 11) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 50)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 22, 10, 11) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 50)
+        str_now = '%02d_%02d_%02d%02d' % (7, 22, 14, 5)
 
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     # print(portionss.shape)
-    which_thresh = 0
+    which_thresh = 1
     which_col = 0
-    mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
-    std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
-    # mean = np.nanmean(portionss[:, :, which_thresh, which_col, :], axis=0)
-    # std = np.std(portionss[:, :, which_thresh, which_col, :], axis=0) / np.sqrt(opt.how_many)
+    # mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
+    # std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
+    mean = np.nanmean(portionss[:, :, which_thresh, which_col, :], axis=0)
+    std = np.std(portionss[:, :, which_thresh, which_col, :], axis=0) / np.sqrt(opt.how_many)
     # print(mean.shape)
     # print(mean)
 
@@ -162,7 +167,7 @@ if __name__ == '__main__':
 
 
     for l in range(mean.shape[0]):
-        plt.plot(opt.ops[1:], mean[l, :], label=str(weights[l]), c=viridis(l))
+        plt.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
     # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
     # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
@@ -177,13 +182,13 @@ if __name__ == '__main__':
     #     plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
 
 
-    if opt.load_sweep:
-        viridis = cm.get_cmap('viridis', mean.shape[1])
-        for l in range(mean.shape[1]):
-            # print(l)
-            plt.plot(weights, mean[:, l], label=str(opt.ops[l]), c=viridis(l))
-        plt.legend(loc=0)
-        plt.xlabel('Weight Value')
-        plt.ylabel('Integral')
-        plt.show()
+    # if opt.load_sweep:
+    #     viridis = cm.get_cmap('viridis', mean.shape[1])
+    #     for l in range(mean.shape[1]):
+    #         # print(l)
+    #         plt.plot(weights, mean[:, l], label=str(opt.ops[l]), c=viridis(l))
+    #     plt.legend(loc=0)
+    #     plt.xlabel('Weight Value')
+    #     plt.ylabel('Integral')
+    #     plt.show()
 

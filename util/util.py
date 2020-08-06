@@ -54,6 +54,7 @@ def integrate(h, w, fake_reg, col, dist, opt, thresh=0.78):
             diff = np.sqrt(a_diff**2 + b_diff**2)
             # print(diff)
             num = len(diff[diff<thresh])
+
             portions[i] = num/(len(diff)+0.0001)
         else:
             portions[i] = np.nan
@@ -625,6 +626,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
     data['mask_B'] = torch.zeros_like(data['A'])
     if opt.bin_variation or opt.spread_mask:
         data['mask_B'] -= 0.5
+    if opt.plot_data_gen:
+        data['labels'] = torch.zeros_like(data['A'])
 
     for nn in range(N):
         # print('Extracting', nn/N)
@@ -635,6 +638,8 @@ def add_weighted_colour_patches(data,opt,p=.125,num_points=None,use_avg=True,sam
         # labels = dbscan_encoded_indexed(ab_bins)
         labels, num_labels = bins_scimage_group_minimal(ab_bins)
         # print('Extracted', nn/N)
+        if opt.plot_data_gen:
+            data['labels'][nn, :, :, :] = torch.tensor(labels)
         if opt.pss is not None:
             p = np.random.choice(opt.pss)
 
@@ -1577,8 +1582,8 @@ def plot_data_results(data, real, fake_reg, opt):
         hint_lab[0, 2, :, :]  = hint[1, :, :]
         hint_rgb = lab2rgb(hint_lab, opt)
         hint_im = tensor2im(hint_rgb)
-        if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation or opt.spread_mask:
+        if opt.weighted_mask or opt.size_points or opt.boundary_points:
+            if opt.bin_variation or opt.spread_mask or opt.boundary_points:
                 hint_im[mask_im == -1] = 0
             else:
                 hint_im[mask_im==-0.5] = 0
@@ -1605,8 +1610,8 @@ def plot_data_results(data, real, fake_reg, opt):
             else:
                 im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
             # ax5.imshow(labels, cmap=cmap)
-        if opt.weighted_mask or opt.size_points:
-            if opt.bin_variation or opt.spread_mask:
+        if opt.weighted_mask or opt.size_points or opt.boundary_points:
+            if opt.bin_variation or opt.spread_mask or opt.boundary_points:
                 im4 = ax4.imshow(mask_im, vmin=-1, vmax=1)
             elif opt.continuous_mask:
                 im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
@@ -1624,3 +1629,75 @@ def plot_data_results(data, real, fake_reg, opt):
         ax5.set_title('Colour Hints')
         plt.tight_layout()
         plt.show()
+
+
+
+def plot_lab_example(data, real, fake_reg, i, opt):
+    for nn in range(data['B'].shape[0]):
+        # print(data.keys())
+        lab_ims = lab2rgb(data['lab'][:, :, :, :], opt)
+        lab_im = tensor2im(lab_ims[nn])
+        rgb_im = tensor2im(data['abRgb'][nn, :, :, :])
+        mask = data['mask_B'][nn, 0, :, :]
+        mask_im = np.asarray(mask)
+        # mask_im = np.transpose(mask_im, (1, 2, 0))
+        hint = data['hint_B'][nn, :, :, :]
+        hint_lab = torch.zeros(1, 3, mask_im.shape[0], mask_im.shape[1])
+        hint_lab[0, 0, :, :] = 0.3
+        hint_lab[0, 1, :, :]  = hint[0, :, :]
+        hint_lab[0, 2, :, :]  = hint[1, :, :]
+        hint_rgb = lab2rgb(hint_lab, opt)
+        hint_im = tensor2im(hint_rgb)
+        if opt.weighted_mask or opt.size_points or opt.boundary_points:
+            if opt.bin_variation or opt.spread_mask or opt.boundary_points:
+                hint_im[mask_im == -1] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
+        if opt.bb_mask or opt.pr_mask:
+            if opt.bin_variation:
+                hint_im[mask_im == -0.75] = 0
+            else:
+                hint_im[mask_im==-0.5] = 0
+
+
+        labels = data['labels'][nn, 0, :, :]
+        cmap = matplotlib.colors.ListedColormap(np.random.rand(256, 3))
+
+        plt.imshow(lab_im)
+        plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/ReportFiles/LabExamples/Lab' + str(i) + '.png', dpi=600)
+        plt.show()
+        # ax2.imshow(fake_reg)
+        plt.imshow(rgb_im)
+        plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/ReportFiles/LabExamples/Rgb' + str(i) + '.png',
+                    dpi=600)
+        plt.show()
+
+        plt.imshow(labels, cmap=cmap)
+        plt.savefig('/Users/Will/Documents/Uni/MscEdinburgh/Diss/ReportFiles/LabExamples/Clust' + str(i) + '.png',
+                    dpi=600)
+        plt.show()
+        # if opt.bb_mask or opt.pr_mask:
+        # #     if opt.bin_variation:
+        # #         im4 = ax4.imshow(mask_im, vmin=-0.75, vmax=0.75)
+        # #     else:
+        # #         im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
+        # #     # ax5.imshow(labels, cmap=cmap)
+        # # if opt.weighted_mask or opt.size_points or opt.boundary_points:
+        # #     if opt.bin_variation or opt.spread_mask or opt.boundary_points:
+        # #         im4 = ax4.imshow(mask_im, vmin=-1, vmax=1)
+        # #     elif opt.continuous_mask:
+        # #         im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=0.5)
+        # #     else:
+        # #         im4 = ax4.imshow(mask_im, vmin=-0.5, vmax=1)
+        # # fig.colorbar(im4, ax=ax4)
+        # # ax5.imshow(hint_im)
+        # # # ax5.imshow(real)
+        # # # ax6.imshow(fake_reg)
+        #
+        # ax1.set_title('Original')
+        # # ax2.set_title('Results')
+        # ax2.set_title('Original ab')
+        # # ax4.set_title('Weighted Mask')
+        # # ax5.set_title('Colour Hints')
+        # plt.tight_layout()
+        # plt.show()
