@@ -23,7 +23,10 @@ import datetime as dt
 import matplotlib.pyplot as plt
 
 import numpy as np
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 14})
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
@@ -62,8 +65,8 @@ if __name__ == '__main__':
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 50)
 
-    # cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
-    cols = [[-0.8, 0.8], [0.8, -0.8]]
+    cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
+    # cols = [[-0.8, 0.8], [0.8, -0.8]]
     cols_l = len(cols)
 
     threshes = np.linspace(0.74, 1.4, 20)
@@ -165,21 +168,23 @@ if __name__ == '__main__':
     # viridis = cm.get_cmap('cividis', mean.shape[0])
     # viridis = cm.get_cmap('gray', mean.shape[0]*1.2)
 
-
+    plt.rc('legend', fontsize=10)
+    fig = plt.figure(figsize=(7, 5))
+    ax = fig.add_subplot(111)
     for l in range(mean.shape[0]):
-        plt.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+        ax.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
     # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
     # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
-    plt.xlabel('Distance')
-    plt.ylabel('Integral')
-    plt.legend(loc=0)
+    ax.set_xlabel(r'\textbf{Radial Distance} (Pixels)')
+    ax.set_ylabel(r'\textbf{Integral}')
+    ax.legend(ncol=4)
     plt.plot()
-    plt.show()
+    plt.savefig('%s%s/portionss_%s%s.png' % (opt.checkpoints_dir, opt.name, str_now, which_col), dpi=700)
     if opt.load_sweep:
         plt.show()
     # else:
-    #     plt.savefig('%s%s/portionss_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
+
 
 
     # if opt.load_sweep:
