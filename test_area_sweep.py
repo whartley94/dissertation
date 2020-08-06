@@ -26,7 +26,7 @@ import numpy as np
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 16})
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
@@ -64,6 +64,7 @@ if __name__ == '__main__':
 
     hyp = np.sqrt(opt.fineSize ** 2 + opt.fineSize ** 2)
     opt.ops = np.linspace(0, hyp, 50)
+    print(opt.ops)
 
     cols = [[0.8, 0.8], [-0.8, 0.8], [0.8, -0.8], [-0.8, -0.8]]
     # cols = [[-0.8, 0.8], [0.8, -0.8]]
@@ -154,7 +155,7 @@ if __name__ == '__main__':
 
     # Save results
     # print(portionss.shape)
-    which_thresh = 1
+    which_thresh = 0
     which_col = 0
     # mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
     # std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
@@ -163,24 +164,47 @@ if __name__ == '__main__':
     # print(mean.shape)
     # print(mean)
 
+    which_thresh2 = which_thresh
+    which_col2 = 3
+    # mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
+    # std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
+    mean2 = np.nanmean(portionss[:, :, which_thresh2, which_col2, :], axis=0)
+    std2 = np.std(portionss[:, :, which_thresh2, which_col2, :], axis=0) / np.sqrt(opt.how_many)
+
     # x = np.linspace(0.0, 1.0, 100)
     viridis = cm.get_cmap('viridis', mean.shape[0])
     # viridis = cm.get_cmap('cividis', mean.shape[0])
     # viridis = cm.get_cmap('gray', mean.shape[0]*1.2)
 
-    plt.rc('legend', fontsize=10)
-    fig = plt.figure(figsize=(7, 5))
-    ax = fig.add_subplot(111)
+    plt.rc('legend', fontsize=9)
+    # plt.rc('title', fontsize=14)
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
+    ax = plt.subplot(121)
     for l in range(mean.shape[0]):
-        ax.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+        plt.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+    plt.setp(ax.get_yticklabels())
+
+    ax2 = plt.subplot(122)
+    for l in range(mean2.shape[0]):
+        plt.plot(opt.ops[1:], mean2[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+    plt.setp(ax2.get_yticklabels(), visible=False)
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
     # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
     # plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
     ax.set_xlabel(r'\textbf{Radial Distance} (Pixels)')
-    ax.set_ylabel(r'\textbf{Integral}')
-    ax.legend(ncol=4)
-    plt.plot()
-    plt.savefig('%s%s/portionss_%s%s.png' % (opt.checkpoints_dir, opt.name, str_now, which_col), dpi=700)
+    ax2.set_xlabel(r'\textbf{Radial Distance} (Pixels)')
+    ax.set_ylabel(r'\textbf{Mean Integral}')
+    ax.legend(title=r'$W_{p}$', ncol=4)
+    ax2.legend(title=r'$W_{p}$', ncol=4)
+    ax.set_ylim(-0.01, 0.93)
+    ax2.set_ylim(-0.01, 0.93)
+    ax.set_title(r'\textbf{Red} $(c = \{80, 80\})$', fontsize=14)
+    ax2.set_title(r'\textbf{Blue} $(c = \{-80, -80\})$', fontsize=14)
+    # ax.set_xlim(-0.01, 220)
+    # ax2.set_xlim(-0.01, 220)
+    #     # plt.plot()
+    plt.tight_layout()
+    plt.savefig('%s%s/xportionss_%s%s.png' % (opt.checkpoints_dir, opt.name, str_now, which_col), dpi=700)
     if opt.load_sweep:
         plt.show()
     # else:

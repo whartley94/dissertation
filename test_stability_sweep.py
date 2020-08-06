@@ -23,7 +23,10 @@ import progressbar as pb
 import shutil
 
 import datetime as dt
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
 
 if __name__ == '__main__':
 
@@ -52,7 +55,7 @@ if __name__ == '__main__':
     # num_points = np.unique(num_points.astype('int'))
     # N = len(num_points)
     num_points = 20
-    randomisers = np.linspace(0, 0.6, 40)
+    randomisers = np.linspace(0, 1, 40)
     randomisers_l = len(randomisers)
     repeats = range(5)
     repeats_l = len(repeats)
@@ -163,17 +166,18 @@ if __name__ == '__main__':
     # num_points_hack = 1. * num_points
     # # num_points_hack[0] = .4
     #
-    plt.plot(randomisers, psnrs_mean, 'bo-', label=str_now)
+    plt.plot(randomisers, psnrs_mean, 'bo-')
     plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
     plt.plot(randomisers, psnrs_mean - psnrs_std, 'b--')
 
     # plt.xscale('log')
     # plt.xticks([.4,1,2,5,10,20,50,100,200,500],
     #     ['Auto','1','2','5','10','20','50','100','200','500'])
-    plt.xlabel('Random Shift')
-    plt.ylabel('PSNR [db]')
-    plt.legend(loc=0)
+    plt.xlabel(r'\textbf{Random Shift}')
+    plt.ylabel(r'\textbf{PSNR} (dB)')
+    # plt.legend(loc=0)
     # plt.xlim((randomisers[0], randomisers[-1]))
-    # plt.savefig('%s%s/shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now))
-    plt.plot()
+    plt.tight_layout()
+    plt.savefig('%s%s/lt_shift_sweep_%s.png' % (opt.checkpoints_dir, opt.name, str_now), dpi=700)
+
     plt.show()
