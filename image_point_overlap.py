@@ -24,7 +24,8 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import cv2
 
-rootdir = "/Users/Will/Documents/Uni/MscEdinburgh/Diss/ReportFiles/Leeky/HirPeps/"
+# rootdir = "/Users/Will/Documents/Uni/MscEdinburgh/Diss/ReportFiles/Leeky/HirPeps/"
+rootdir = '/Users/Will/Documents/Uni/MscEdinburgh/Diss/bitsync/Images/Dan Radford/SP/'
 dirs = os.listdir(rootdir)
 dirs2 = []
 for i in dirs:
@@ -86,4 +87,4 @@ for m in dirs2:
     # plt.imshow(img)
     # plt.show()
     result_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(os.path.join(rootdir, m, 'abracadabra.png'), result_bgr)
+    cv2.imwrite(os.path.join(rootdir, m, 'Appended.png'), result_bgr)

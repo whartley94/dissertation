@@ -1443,6 +1443,17 @@ def calculate_psnr_np(img1, img2):
     cur_MSE = np.mean(SE_map)
     return 20*np.log10(255./np.sqrt(cur_MSE))
 
+def calculate_sim_thresh_np(img1, img2, threshold):
+    import numpy as np
+    SE_map = np.abs(1. * img1 - img2)
+    x = [SE_map < threshold]
+    g = np.sum(x)
+    h, w, d = img1.shape
+    size = h*w*d
+    portion = g/size
+    return portion
+
+
 def calculate_psnr_torch(img1, img2):
     SE_map = (1.*img1-img2)**2
     cur_MSE = torch.mean(SE_map)
