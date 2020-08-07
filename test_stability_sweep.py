@@ -144,7 +144,8 @@ if __name__ == '__main__':
 
 
     else:
-        str_now = '%02d_%02d_%02d%02d' % (7, 21, 18, 8)
+        # str_now = '%02d_%02d_%02d%02d' % (7, 21, 18, 8)
+        str_now = '%02d_%02d_%02d%02d' % (8, 6, 16, 54)
         psnrs = np.load('%s%s/shifted_psnrs_%s.npy' % (opt.checkpoints_dir, opt.name,str_now))
 
     # Avg results

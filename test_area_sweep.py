@@ -72,6 +72,7 @@ if __name__ == '__main__':
 
     threshes = np.linspace(0.74, 1.4, 20)
     threshes_l = len(threshes)
+    # print(threshes[9])
 
     if not opt.load_sweep:
         dataset = torchvision.datasets.ImageFolder(opt.dataroot,
@@ -150,12 +151,13 @@ if __name__ == '__main__':
         # str_now = '%02d_%02d_%02d%02d' % (7, 21, 16, 51) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 20)
         # str_now = '%02d_%02d_%02d%02d' % (7, 22, 10, 11) #This one was -1 to 1 weight - col 0.8, 0.8.  - opt.ops = np.linspace(0, hyp, 50)
         str_now = '%02d_%02d_%02d%02d' % (7, 22, 14, 5)
+        str_now = '%02d_%02d_%02d%02d' % (8, 6, 17, 15)
 
         portionss = np.load('%s%s/portionss_%s.npy' % (opt.checkpoints_dir, opt.name, str_now))
 
     # Save results
     # print(portionss.shape)
-    which_thresh = 0
+    which_thresh = 10
     which_col = 0
     # mean = np.nanmean(portionss[:, :, which_thresh, :], axis=0)
     # std = np.std(portionss[:, :, which_thresh, :], axis=0) / np.sqrt(opt.how_many)
@@ -178,15 +180,16 @@ if __name__ == '__main__':
 
     plt.rc('legend', fontsize=9)
     # plt.rc('title', fontsize=14)
+    rangr = 44
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
     ax = plt.subplot(121)
     for l in range(mean.shape[0]):
-        plt.plot(opt.ops[1:], mean[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+        plt.plot(opt.ops[1:rangr+1], mean[l, :rangr], label=str(np.round(weights[l], 2)), c=viridis(l))
     plt.setp(ax.get_yticklabels())
 
     ax2 = plt.subplot(122)
     for l in range(mean2.shape[0]):
-        plt.plot(opt.ops[1:], mean2[l, :], label=str(np.round(weights[l], 2)), c=viridis(l))
+        plt.plot(opt.ops[1:rangr+1], mean2[l, :rangr], label=str(np.round(weights[l], 2)), c=viridis(l))
     plt.setp(ax2.get_yticklabels(), visible=False)
     # plt.plot(opt.ops, mean, 'bo-', label=str_now)
     # plt.plot(randomisers, psnrs_mean + psnrs_std, 'b--')
@@ -196,8 +199,8 @@ if __name__ == '__main__':
     ax.set_ylabel(r'\textbf{Mean Integral}')
     ax.legend(title=r'$W_{p}$', ncol=4)
     ax2.legend(title=r'$W_{p}$', ncol=4)
-    ax.set_ylim(-0.01, 0.93)
-    ax2.set_ylim(-0.01, 0.93)
+    ax.set_ylim(-0.01, 1.13)
+    ax2.set_ylim(-0.01, 1.13)
     ax.set_title(r'\textbf{Red} $(c = \{80, 80\})$', fontsize=14)
     ax2.set_title(r'\textbf{Blue} $(c = \{-80, -80\})$', fontsize=14)
     # ax.set_xlim(-0.01, 220)
